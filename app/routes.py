@@ -1,5 +1,5 @@
 from app import app, db
-from app.models import User, Book
+from app.models import User, Subscribe
 import json
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from app.forms import LoginForm, RegistrationForm,ResetPasswordForm,ResetPasswordRequestForm
@@ -59,7 +59,8 @@ def register():
 def reset_password_request():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-    form = ResetPasswordRequestForm()#少了括号会报错validate_on_submit() missing 1 required positional argument: 'self'
+    form = ResetPasswordRequestForm()
+    # 少了括号会报错validate_on_submit() missing 1 required positional argument: 'self'
     if form.validate_on_submit():
         user=User.query.filter_by(email=form.email.data).first()
         if user:
@@ -69,6 +70,7 @@ def reset_password_request():
         flash('Check your email for the instructions to reset your password')
         return redirect(url_for('login'))
     return render_template('reset_password_request.html',title='Reset Password',form=form)
+
 
 @app.route('/reset_password/<token>',methods=['GET','POST'])
 def reset_password(token):
@@ -86,14 +88,49 @@ def reset_password(token):
     return render_template('reset_password.html',title='Reset Password',form=form)
 
 
-@app.route('/', methods=['GET', 'POST'])
-@app.route('/index', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
+@app.route('/index', methods=['GET'])
 @login_required
 def index():
-    subscribe = {}
+    data = {}
+    # 获取订阅信息
+    data['subscribe'] = []
     for b in current_user.subscribing:
-        data = get_response('http://api.zhuishushenqi.com/book/' + b._id)
-
-
+        js = get_response('http://api.zhuishushenqi.com/book/' + b._id)
+        data['subscribe'] . append({
+            'title': js['title'],
+            '_id': b._id,
+            'last_chapter': js['lastChapter'],
+            'updated': js['updated']
+        })
+    # 获取榜单信息
 
     return jsonify(data)
+
+
+@app.route('/subscribe/<_id>', methods=['GET'])
+@login_required
+def subscribe(_id):
+    js = get_response('http://api.zhuishushenqi.com/book/' + _id)
+    name = js.get('title')
+    if not name:
+        flash('这本书不存在')
+        return '', 403
+
+    s = Subscribe(user=current_user, book_id=_id, book_name=name)
+    db.session.add(s)
+    db.session.commit()
+    flash('订阅成功')
+
+
+@app.route('/unsubscribe/<_id>', methods=['DELETE'])
+@login_required
+def unsubscribe(_id):
+    s = Subscribe.query.filter_by(user=current_user, book_id=_id)
+    db.session.remove(s)
+    db.session.commit()
+    flash('取消订阅成功')
+
+
+
+
