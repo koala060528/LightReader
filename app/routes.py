@@ -7,6 +7,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
 from datetime import datetime
 import requests
+from config import Config
 
 
 def get_response(url):
@@ -72,7 +73,7 @@ def reset_password_request():
     return render_template('reset_password_request.html',title='Reset Password',form=form)
 
 
-@app.route('/reset_password/<token>',methods=['GET','POST'])
+@app.route('/reset_password/<token>',methods=['GET', 'POST'])
 def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -85,7 +86,7 @@ def reset_password(token):
         db.session.commit()
         flash('Your password has been reset')
         return redirect(url_for('login'))
-    return render_template('reset_password.html',title='Reset Password',form=form)
+    return render_template('reset_password.html', title='Reset Password', form=form)
 
 
 @app.route('/', methods=['GET'])
@@ -95,11 +96,11 @@ def index():
     data = {}
     # 获取订阅信息
     data['subscribe'] = []
-    for b in current_user.subscribing:
-        js = get_response('http://api.zhuishushenqi.com/book/' + b._id)
+    for s in current_user.subscribing:
+        js = get_response('http://api.zhuishushenqi.com/book/' + s.book_id)
         data['subscribe'] . append({
             'title': js['title'],
-            '_id': b._id,
+            '_id': s.book_id,
             'last_chapter': js['lastChapter'],
             'updated': js['updated']
         })
@@ -108,7 +109,7 @@ def index():
     return jsonify(data)
 
 
-@app.route('/subscribe/<_id>', methods=['GET'])
+@app.route('/api/v1/subscribe/<_id>', methods=['GET'])
 @login_required
 def subscribe(_id):
     js = get_response('http://api.zhuishushenqi.com/book/' + _id)
@@ -123,13 +124,30 @@ def subscribe(_id):
     flash('订阅成功')
 
 
-@app.route('/unsubscribe/<_id>', methods=['DELETE'])
+@app.route('/api/v1/unsubscribe/<_id>', methods=['DELETE'])
 @login_required
 def unsubscribe(_id):
     s = Subscribe.query.filter_by(user=current_user, book_id=_id)
     db.session.remove(s)
     db.session.commit()
     flash('取消订阅成功')
+
+
+@app.route('/api/v1/get_chapter_detail/', methods=['GET'])
+# @login_required
+def get_chapter_detail():
+    url = request.args.get('url')
+    bookId = request.args.get('bookId')
+    chapterFile = request.args.get('chapterFile')
+    temp_url = url + '&bookId=' + bookId + '&chapterFile=' + chapterFile
+    chapter_url = Config.CHAPTER_DETAIL.format(temp_url.replace('/', '%2F').replace('?', '%3F'))
+    data = get_response(chapter_url)
+    return jsonify(data)
+
+
+# app.route()
+
+
 
 
 
