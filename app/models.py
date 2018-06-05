@@ -53,6 +53,7 @@ class Subscribe(db.Model):
     book_id = db.Column(db.String(128))
     book_name = db.Column(db.String(128))
     chapter = db.Column(db.String(128))
+    source = db.Column(db.String(128))
 
     user = db.relationship('User', backref=db.backref('subscribing', lazy='dynamic'))
 
