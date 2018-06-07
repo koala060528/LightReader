@@ -1,0 +1,11 @@
+
+
+{% block app_content %}
+    <b>{{ data.get('title') }}</b>
+    <p>作者：{{ data.get('author') }}</p>
+    <p>简介：</p>
+    <p>{{ data.get('longIntro') }}</p>
+    <p>最近更新：{{ data.get('updated') }}</p>
+    <p>最新章节：{{ data.get('lastChapter') }}</p>
+    <a href="{{ url_for('chapter',id=data.get('_id')) }}">章节列表</a><br>
+{% endblock %}

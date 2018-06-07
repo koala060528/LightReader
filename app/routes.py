@@ -2,10 +2,11 @@ from app import app, db
 from app.models import User, Subscribe
 import json
 from flask import render_template, flash, redirect, url_for, request, jsonify
-from app.forms import LoginForm, RegistrationForm, ResetPasswordForm, ResetPasswordRequestForm
+from app.forms import LoginForm, RegistrationForm, ResetPasswordForm, ResetPasswordRequestForm, SearchForm
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
 from datetime import datetime
+from time import time
 import requests
 from config import Config
 
@@ -109,7 +110,7 @@ def index():
     return jsonify(data)
 
 
-@app.route('/api/v1/subscribe/<_id>', methods=['GET'])
+@app.route('/subscribe/<_id>', methods=['GET'])
 @login_required
 def subscribe(_id):
     js = get_response('http://api.zhuishushenqi.com/book/' + _id)
@@ -124,7 +125,7 @@ def subscribe(_id):
     flash('订阅成功')
 
 
-@app.route('/api/v1/unsubscribe/<_id>', methods=['DELETE'])
+@app.route('/unsubscribe/<_id>', methods=['DELETE'])
 @login_required
 def unsubscribe(_id):
     s = Subscribe.query.filter_by(user=current_user, book_id=_id)
@@ -133,20 +134,70 @@ def unsubscribe(_id):
     flash('取消订阅成功')
 
 
-@app.route('/api/v1/get_chapter_detail/', methods=['GET'])
+@app.route('/chapter', methods=['GET'])
+def chapter():
+    bookId = request.args.get('id')
+    data = get_response('http://api.zhuishushenqi.com/mix-atoc/' + bookId)
+    lis = []
+    for c in data.get('mixToc').get('chapters'):
+        lis.append({
+            'title': c.get('title'),
+            'link': c.get('link')
+        })
+    return render_template('chapter.html', data=lis, title='章节列表')
+
+
+@app.route('/read/', methods=['GET'])
 # @login_required
-def get_chapter_detail():
+def read():
+    title = request.args.get('title')
     url = request.args.get('url')
-    bookId = request.args.get('bookId')
-    chapterFile = request.args.get('chapterFile')
-    temp_url = url + '&bookId=' + bookId + '&chapterFile=' + chapterFile
-    chapter_url = Config.CHAPTER_DETAIL.format(temp_url.replace('/', '%2F').replace('?', '%3F'))
+    # bookId = request.args.get('bookId')
+    # chapterFile = request.args.get('chapterFile')
+    # temp_url = url + '&bookId=' + bookId + '&chapterFile=' + chapterFile
+    chapter_url = Config.CHAPTER_DETAIL.format(url.replace('/', '%2F').replace('?', '%3F'))
     data = get_response(chapter_url)
-    return jsonify(data)
+    return data.get('chapter').get('body')
+    # return jsonify(data)
+    # return render_template('read.html', data=data, title='章节列表')
 
 
-@app.route('/api/v1/search/', methods=['GET', 'POST'])
+@app.route('/search/', methods=['GET', 'POST'])
 def search():
-    query = request.args.get('query')
-    data = get_response('http://api.zhuishushenqi.com/book/fuzzy-search/?query=' + query)
-    return render_template('search.html', data=data, title='搜索结果：%s' % query)
+    form = SearchForm()
+    if form.validate_on_submit():
+        data = get_response('http://api.zhuishushenqi.com/book/fuzzy-search/?query=' + form.search.data)
+        lis=[]
+        for book in data.get('books'):
+            lis.append(book)
+        return render_template('search.html', data=lis, title='搜索结果')
+    return render_template('search.html', form=form, title='搜索')
+
+
+UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+LOCAL_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+
+def utc2local(utc_st):
+    now_stamp = time()
+    local_time = datetime.fromtimestamp(now_stamp)
+    utc_time = datetime.utcfromtimestamp(now_stamp)
+    offset = local_time - utc_time
+    local_st = utc_st + offset
+    return local_st
+
+
+def local2utc(local_st):
+    time_struct = time.mktime(local_st.timetuple())
+    utc_st = datetime.datetime.utcfromtimestamp(time_struct)
+    return utc_st
+
+
+@app.route('/book_detail', methods=['GET'])
+def book_detail():
+    bookId = request.args.get('id')
+    data = get_response('http://api.zhuishushenqi.com/book/' + bookId)
+    t = data['updated']  # = datetime(data['updated']).strftime('%Y-%m-%d %H:%M:%S')
+    t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
+    data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
+    return render_template('book_detail.html', data=data, title=data.get('title'))

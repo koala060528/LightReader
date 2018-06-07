@@ -1,0 +1,18 @@
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    {% if form %}
+        <div class="row">
+            <div class="col-md-4">
+                {{ wtf.quick_form(form) }}
+            </div>
+        </div>
+        <br>
+    {% endif %}
+    {% if data %}
+        {% for book in data %}
+            {% include '_book.html' %}
+        {% endfor %}
+    {% endif %}
+
+{% endblock %}
