@@ -97,19 +97,12 @@ def register():
 #     return render_template('reset_password.html', title='Reset Password', form=form)
 
 
-@app.route('/', methods=['GET'])
-@app.route('/index', methods=['GET'])
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
 # @login_required
 def index():
     dic = {}
-    # 搜索框
-    form = SearchForm()
-    if form.validate_on_submit():
-        data = get_response('http://api.zhuishushenqi.com/book/fuzzy-search/?query=' + form.search.data)
-        lis = []
-        for book in data.get('books'):
-            lis.append(book)
-        return render_template('search.html', data=lis, title='搜索结果')
+
     # 获取订阅信息
     if current_user.is_authenticated:
         dic['subscribe'] = []
@@ -122,32 +115,52 @@ def index():
                 'updated': js['updated']
             })
     # 获取榜单信息
+    # todo
 
-    return jsonify(dic)
+    # 搜索框
+    form = SearchForm()
+    if form.validate_on_submit():
+        data = get_response('http://api.zhuishushenqi.com/book/fuzzy-search/?query=' + form.search.data)
+        lis = []
+        for book in data.get('books'):
+            lis.append(book)
+        return render_template('book_list.html', data=lis, title='搜索结果', form=form)
+
+    return render_template('index.html', data=dic, form=form, title='首页')
 
 
-@app.route('/subscribe/<_id>', methods=['GET'])
+@app.route('/subscribe/')
 @login_required
-def subscribe(_id):
+def subscribe():
+    _id = request.args.get('id')
     js = get_response('http://api.zhuishushenqi.com/book/' + _id)
     name = js.get('title')
     if not name:
         flash('这本书不存在')
-        return '', 403
+        return redirect(url_for('index'))
 
     s = Subscribe(user=current_user, book_id=_id, book_name=name)
     db.session.add(s)
     db.session.commit()
     flash('订阅成功')
+    next_page = request.args.get('next')
+    if not next_page or url_parse(next_page).decode_netloc() != '':
+        next_page = url_for('index')
+    return redirect(next_page)
 
 
-@app.route('/unsubscribe/<_id>', methods=['DELETE'])
+@app.route('/unsubscribe/')
 @login_required
-def unsubscribe(_id):
-    s = Subscribe.query.filter_by(user=current_user, book_id=_id)
-    db.session.remove(s)
+def unsubscribe():
+    _id = request.args.get('id')
+    s = current_user.subscribing.filter(Subscribe.book_id == _id).first()
+    db.session.delete(s)
     db.session.commit()
     flash('取消订阅成功')
+    next_page = request.args.get('next')
+    if not next_page or url_parse(next_page).decode_netloc() != '':
+        next_page = url_for('index')
+    return redirect(next_page)
 
 
 @app.route('/chapter', methods=['GET'])
@@ -178,16 +191,16 @@ def read():
     # return render_template('read.html', data=data, title='章节列表')
 
 
-@app.route('/search/', methods=['GET', 'POST'])
-def search():
-    form = SearchForm()
-    if form.validate_on_submit():
-        data = get_response('http://api.zhuishushenqi.com/book/fuzzy-search/?query=' + form.search.data)
-        lis = []
-        for book in data.get('books'):
-            lis.append(book)
-        return render_template('search.html', data=lis, title='搜索结果')
-    return render_template('search.html', form=form, title='搜索')
+# @app.route('/search/', methods=['GET', 'POST'])
+# def search():
+#     form = SearchForm()
+#     if form.validate_on_submit():
+#         data = get_response('http://api.zhuishushenqi.com/book/fuzzy-search/?query=' + form.search.data)
+#         lis = []
+#         for book in data.get('books'):
+#             lis.append(book)
+#         return render_template('book_list.html', data=lis, title='搜索结果')
+#     return render_template('book_list.html', form=form, title='搜索')
 
 
 UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -216,4 +229,7 @@ def book_detail():
     t = data['updated']  # = datetime(data['updated']).strftime('%Y-%m-%d %H:%M:%S')
     t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
     data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
+    if current_user.is_authenticated:
+        if current_user.subscribing.filter(Subscribe.book_id == bookId).first():
+            data['is_subscribe'] = True
     return render_template('book_detail.html', data=data, title=data.get('title'))

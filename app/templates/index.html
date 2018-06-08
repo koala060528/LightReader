@@ -1,12 +1,31 @@
 {% extends 'base.html' %}
-{% block content %}
-    <h1>Hi,{{ current_user.username }}</h1>
-{% endblock %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-    {% if current_user.is_anonymous %}
-    <h1>订阅</h1>
+    {% if not current_user.is_anonymous %}
+        <p>欢迎，{{ current_user.name }}</p>
+        <hr>
+       <p>订阅列表</p>
+        {% for book in data.get('subscribe') %}
+            <table>
+            <tr>
+                <a href="{{ url_for('book_detail',id=book['_id']) }}">{{ book['title'] }}</a>
 
+            </tr>
+            <tr>
+                <p>{{ book['last_chapter'] }}</p>
+            </tr>
+            </table>
+
+        {% endfor %}
+        <hr>
     {% endif %}
-<h1>订阅</h1>
+
+    {% if form %}
+        {{ wtf.quick_form(form) }}
+        <hr>
+    {% endif %}
+
+
+
 {% endblock %}

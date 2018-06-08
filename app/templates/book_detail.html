@@ -1,4 +1,4 @@
-
+{% extends 'base.html' %}
 
 {% block app_content %}
     <b>{{ data.get('title') }}</b>
@@ -8,4 +8,11 @@
     <p>最近更新：{{ data.get('updated') }}</p>
     <p>最新章节：{{ data.get('lastChapter') }}</p>
     <a href="{{ url_for('chapter',id=data.get('_id')) }}">章节列表</a><br>
+    {% if not current_user.is_anonymous %}
+        {% if data.get('is_subscribe') %}
+            <a href="{{ url_for('unsubscribe',id=data.get('_id')) }}">取消订阅</a>
+        {% else %}
+            <a href="{{ url_for('subscribe',id=data.get('_id')) }}">订阅</a>
+        {% endif %}
+    {% endif %}
 {% endblock %}

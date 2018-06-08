@@ -5,8 +5,8 @@ from app.models import User
 
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
+    username = StringField('用户名', validators=[DataRequired()])
+    password = PasswordField('密码', validators=[DataRequired()])
     remember_me = BooleanField('记住我')
     submit = SubmitField('登录')
 
@@ -16,7 +16,7 @@ class RegistrationForm(FlaskForm):
     # email = StringField('邮箱地址', validators=[DataRequired(), Email()])
     password = PasswordField('密码', validators=[DataRequired()])
     password2 = PasswordField('重复密码', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('Register')
+    submit = SubmitField('注册')
 
     def validate_username(self, username):
         user = User.query.filter_by(name=username.data).first()
@@ -41,5 +41,5 @@ class RegistrationForm(FlaskForm):
 
 
 class SearchForm(FlaskForm):
-    search = StringField('书籍、作者', validators=[DataRequired()])
+    search = StringField(validators=[DataRequired()])
     submit = SubmitField('搜索')

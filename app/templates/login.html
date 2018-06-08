@@ -1,30 +1,7 @@
 {% extends 'base.html' %}
-
+{% import 'bootstrap/wtf.html' as wtf %}
 {% block app_content %}
     <h1>登录</h1>
-    <form action="" ,method="post">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.username.label }}<br>
-            {{ form.username(size=30) }}<br>
-            {% for error in form.username.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.password.label }}<br>
-            {{ form.password(size=30) }}<br>
-            {% for error in form.password.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.remember_me.label }}<br>
-            {{ form.remember_me }}<br>
-        </p>
-        <p>
-            {{ form.submit }}<br>
-        </p>
-    </form>
+    {{ wtf.quick_form(form) }}
     <p><a href="{{ url_for('register') }}">注册</a></p>
 {% endblock %}
