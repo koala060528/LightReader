@@ -14,9 +14,9 @@ class User(UserMixin, db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer,primary_key=True)
     name = db.Column(db.String(20),unique=True,nullable=False)
-    email = db.Column(db.String(50),unique=True,nullable=False)
+    # email = db.Column(db.String(50),unique=True,nullable=False)
     password_hash = db.Column(db.String(128))
-    last_seen = db.Column(db.DateTime,default=datetime.now())
+    # last_seen = db.Column(db.DateTime,default=datetime.now())
 
     # subscribing = db.relationship('Book',
     #                              secondary=subscribe,

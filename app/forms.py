@@ -12,8 +12,8 @@ class LoginForm(FlaskForm):
 
 
 class RegistrationForm(FlaskForm):
-    name = StringField('用户名', validators=[DataRequired()])
-    email = StringField('邮箱地址', validators=[DataRequired(), Email()])
+    username = StringField('用户名', validators=[DataRequired()])
+    # email = StringField('邮箱地址', validators=[DataRequired(), Email()])
     password = PasswordField('密码', validators=[DataRequired()])
     password2 = PasswordField('重复密码', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register')
@@ -23,21 +23,21 @@ class RegistrationForm(FlaskForm):
         if user is not None:
             raise ValidationError('请输入一个不同的用户名')
 
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user is not None:
-            raise ValidationError('请输入一个不同的邮箱')
+    # def validate_email(self, email):
+    #     user = User.query.filter_by(email=email.data).first()
+    #     if user is not None:
+    #         raise ValidationError('请输入一个不同的邮箱')
 
 
-class ResetPasswordRequestForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    submit = SubmitField('Request Password Reset')
-
-
-class ResetPasswordForm(FlaskForm):
-    password = PasswordField('password', validators=[DataRequired()])
-    password2 = PasswordField('Repeat Password', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('Request Password Reset')
+# class ResetPasswordRequestForm(FlaskForm):
+#     email = StringField('Email', validators=[DataRequired(), Email()])
+#     submit = SubmitField('Request Password Reset')
+#
+#
+# class ResetPasswordForm(FlaskForm):
+#     password = PasswordField('password', validators=[DataRequired()])
+#     password2 = PasswordField('Repeat Password', validators=[DataRequired(), EqualTo('password')])
+#     submit = SubmitField('Request Password Reset')
 
 
 class SearchForm(FlaskForm):

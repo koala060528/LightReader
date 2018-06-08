@@ -13,7 +13,6 @@ app.config.from_object(Config)
 login = LoginManager(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app=app, db=db)
-bootstrap = Bootstrap(app)
 
 login.login_view = 'login'
 
