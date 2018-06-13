@@ -165,9 +165,13 @@ def unsubscribe():
 
 @app.route('/chapter', methods=['GET'])
 def chapter():
+    start = int(request.args.get('start'))
+    offset = int(request.args.get('offset'))
     bookId = request.args.get('id')
     data = get_response('http://api.zhuishushenqi.com/mix-atoc/' + bookId)
     lis = []
+    chap = data.get('mixToc').get('chapters')
+    lis = chap[start:start+offset]
     for c in data.get('mixToc').get('chapters'):
         lis.append({
             'title': c.get('title'),
