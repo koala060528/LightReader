@@ -163,21 +163,27 @@ def unsubscribe():
     return redirect(next_page)
 
 
-@app.route('/chapter', methods=['GET'])
-def chapter():
-    start = int(request.args.get('start'))
-    offset = int(request.args.get('offset'))
-    bookId = request.args.get('id')
-    data = get_response('http://api.zhuishushenqi.com/mix-atoc/' + bookId)
+@app.route('/chapter/<id>', methods=['GET'])
+def chapter(id):
+    page = request.args.get('page')
+    # offset = request.args.get('offset')
+    bookId = id
+    data = get_response('http://api.zhuishushenqi.com/mix-atoc/' + str(bookId))
     lis = []
+    l = []
     chap = data.get('mixToc').get('chapters')
-    lis = chap[start:start+offset]
-    for c in data.get('mixToc').get('chapters'):
-        lis.append({
+    page_count = int(len(chap) / Config.CHAPTER_PER_PAGE)
+    if page is not None:
+        page = int(page)
+        if page > page_count:
+            page = page_count
+        lis = chap[page * Config.CHAPTER_PER_PAGE:(page + 1) * Config.CHAPTER_PER_PAGE]
+    for c in lis:
+        l.append({
             'title': c.get('title'),
             'link': c.get('link')
         })
-    return render_template('chapter.html', data=lis, title='章节列表')
+    return render_template('chapter.html', data=l, title='章节列表', page_count=page_count, page=page, id=bookId)
 
 
 @app.route('/read/', methods=['GET'])

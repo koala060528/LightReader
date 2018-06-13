@@ -2,8 +2,47 @@
 
 {% block app_content %}
     <p>
-    {% for c in data %}
-        <a href="{{ url_for('read',url=c.link,title=c.title) }}">{{ c.title }}</a><br>
-    {% endfor %}
+        {% for c in data %}
+            <a href="{{ url_for('read',url=c.link,title=c.title) }}">{{ c.title }}</a><br>
+        {% endfor %}
     </p>
+    <hr>
+    <tr>
+        <th>
+            {% if page != 0 %}
+                <a href="{{ url_for('chapter',id=id,page=0) }}">首页</a>
+            {% else %}
+                首页
+            {% endif %}
+        </th>
+        <th>
+            {% if page != 0 %}
+                <a href="{{ url_for('chapter',id=id,page=page - 1) }}">上一页</a>
+            {% else %}
+                上一页
+            {% endif %}
+        </th>
+        <th>
+            {% if page != page_count %}
+                <a href="{{ url_for('chapter',id=id,page=page + 1) }}">下一页</a>
+            {% else %}
+                下一页
+            {% endif %}
+        </th>
+        <th>
+            {% if page != page_count %}
+                <a href="{{ url_for('chapter',id=id,page=page_count) }}">尾页</a>
+            {% else %}
+                尾页
+            {% endif %}
+        </th>
+    </tr>
+    <tr>
+        <th>
+            <form action="/chapter/{{ id }}">
+                <input type="text" name="page" value="">
+                <input type="submit" value="跳转">
+            </form>
+        </th>
+    </tr>
 {% endblock %}
