@@ -173,6 +173,8 @@ def chapter(id):
     l = []
     chap = data.get('mixToc').get('chapters')
     page_count = int(len(chap) / Config.CHAPTER_PER_PAGE)
+    if len(chap) % Config.CHAPTER_PER_PAGE == 0:
+        page_count -= 1
     if page is not None:
         page = int(page)
         if page > page_count:
