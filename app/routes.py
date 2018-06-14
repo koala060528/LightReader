@@ -166,7 +166,6 @@ def unsubscribe():
 @app.route('/chapter/<id>', methods=['GET'])
 def chapter(id):
     page = request.args.get('page')
-    # offset = request.args.get('offset')
     bookId = id
     data = get_response('http://api.zhuishushenqi.com/mix-atoc/' + str(bookId))
     lis = []
@@ -180,27 +179,35 @@ def chapter(id):
         if page > page_count:
             page = page_count
         lis = chap[page * Config.CHAPTER_PER_PAGE:(page + 1) * Config.CHAPTER_PER_PAGE]
+        i = 0
     for c in lis:
         l.append({
-            'title': c.get('title'),
-            'link': c.get('link')
+            'index': page * Config.CHAPTER_PER_PAGE + i,
+            'title': c.get('title')
         })
+        i += 1
+
     return render_template('chapter.html', data=l, title='章节列表', page_count=page_count, page=page, id=bookId)
 
 
 @app.route('/read/', methods=['GET'])
 # @login_required
 def read():
-    title = request.args.get('title')
-    url = request.args.get('url')
-    # bookId = request.args.get('bookId')
-    # chapterFile = request.args.get('chapterFile')
-    # temp_url = url + '&bookId=' + bookId + '&chapterFile=' + chapterFile
+    index = int(request.args.get('index'))
+    bookId = request.args.get('bookId')
+    data = get_response('http://api.zhuishushenqi.com/mix-atoc/' + str(bookId))
+    page = int(index / Config.CHAPTER_PER_PAGE)
+    chap = data.get('mixToc').get('chapters')
+    title = chap[index]['title']
+    url = chap[index]['link']
     chapter_url = Config.CHAPTER_DETAIL.format(url.replace('/', '%2F').replace('?', '%3F'))
     data = get_response(chapter_url)
-    return data.get('chapter').get('body')
-    # return jsonify(data)
-    # return render_template('read.html', data=data, title='章节列表')
+    body = data.get('chapter').get('body')
+    lis = body.split('\n')
+
+    return render_template('read.html', body=lis, title=title, next=(index + 1) if len(chap) - index > 1 else None,
+                           pre=(index - 1) if index > 0 else None,
+                           bookId=bookId, page=page)
 
 
 # @app.route('/search/', methods=['GET', 'POST'])
