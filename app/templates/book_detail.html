@@ -10,6 +10,9 @@
     <a href="/chapter/{{ data.get('_id') }}?page=0">章节列表</a><br>
     {% if not current_user.is_anonymous %}
         {% if data.get('is_subscribe') %}
+            <p>阅读进度：<a
+                    href="{{ url_for('read',bookId=data.get('_id'),index=data.get('reading')) }}">{{ data.get('readingChapter') }}</a>
+            </p>
             <a href="{{ url_for('unsubscribe',id=data.get('_id')) }}">取消订阅</a>
         {% else %}
             <a href="{{ url_for('subscribe',id=data.get('_id')) }}">订阅</a>

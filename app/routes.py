@@ -172,6 +172,11 @@ def read():
     body = data.get('chapter').get('body')
     lis = body.split('\n')
 
+    if current_user.is_authenticated:
+        s = Subscribe.query.filter(Subscribe.book_id == bookId, Subscribe.user == current_user).first()
+        s.chapter = index
+        db.session.commit()
+
     return render_template('read.html', body=lis, title=title, next=(index + 1) if len(chap) - index > 1 else None,
                            pre=(index - 1) if index > 0 else None,
                            bookId=bookId, page=page)
@@ -216,6 +221,16 @@ def book_detail():
     t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
     data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
     if current_user.is_authenticated:
-        if current_user.subscribing.filter(Subscribe.book_id == bookId).first():
+        s = current_user.subscribing.filter(Subscribe.book_id == bookId).first()
+        if s:
             data['is_subscribe'] = True
+            c = s.chapter
+            if not c:
+                c = 0
+            data['reading'] = c
+            d = get_response('http://api.zhuishushenqi.com/mix-atoc/' + str(bookId))
+            chap = d.get('mixToc').get('chapters')
+            # chapter_title = chap[int(c)]['title']
+            data['readingChapter'] = chap[int(c)]['title']
+
     return render_template('book_detail.html', data=data, title=data.get('title'))
