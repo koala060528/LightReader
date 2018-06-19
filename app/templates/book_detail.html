@@ -4,7 +4,11 @@
     <b>{{ data.get('title') }}</b>
     <p>作者：{{ data.get('author') }}</p>
     <p>简介：</p>
-    <p>{{ data.get('longIntro') }}</p>
+    {% for p in data.get('longIntro') %}
+        <p style="font-size: 100%">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ p }}
+        </p>
+    {% endfor %}
     <p>最近更新：{{ data.get('updated') }}</p>
     <p>最新章节：{{ data.get('lastChapter') }}</p>
     <a href="/chapter/{{ data.get('_id') }}?page=0">章节列表</a><br>

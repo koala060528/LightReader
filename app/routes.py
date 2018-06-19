@@ -220,6 +220,8 @@ def book_detail():
     t = data['updated']  # = datetime(data['updated']).strftime('%Y-%m-%d %H:%M:%S')
     t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
     data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
+    lis = data.get('longIntro').split('\n')
+    data['longIntro']=lis
     if current_user.is_authenticated:
         s = current_user.subscribing.filter(Subscribe.book_id == bookId).first()
         if s:
