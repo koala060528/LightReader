@@ -108,7 +108,7 @@ def subscribe():
 
     data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + _id)
 
-    s = Subscribe(user=current_user, book_id=_id, book_name=name, source_id=data[0]['_id'])
+    s = Subscribe(user=current_user, book_id=_id, book_name=name, source_id=data[1]['_id'])
     db.session.add(s)
     db.session.commit()
     flash('订阅成功')
@@ -279,4 +279,4 @@ def source(book_id):
         s['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
     if not page:
         page = 0
-    return render_template('source.html', data=data, title='换源', page=page, book_id=book_id)
+    return render_template('source.html', data=data[1:], title='换源', page=page, book_id=book_id)
