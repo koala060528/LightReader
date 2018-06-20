@@ -2,7 +2,7 @@ from app import app, db
 from app.models import User, Subscribe
 import json
 from flask import render_template, flash, redirect, url_for, request, jsonify
-from app.forms import LoginForm, RegistrationForm, SearchForm
+from app.forms import LoginForm, RegistrationForm, SearchForm, JumpForm
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
 from datetime import datetime
@@ -106,7 +106,9 @@ def subscribe():
         flash('这本书不存在')
         return redirect(url_for('index'))
 
-    s = Subscribe(user=current_user, book_id=_id, book_name=name)
+    data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + _id)
+
+    s = Subscribe(user=current_user, book_id=_id, book_name=name, source_id=data[0]['_id'])
     db.session.add(s)
     db.session.commit()
     flash('订阅成功')
@@ -130,14 +132,15 @@ def unsubscribe():
     return redirect(next_page)
 
 
-@app.route('/chapter/<id>', methods=['GET'])
-def chapter(id):
+@app.route('/chapter/<source_id>', methods=['GET'])
+def chapter(source_id):
     page = request.args.get('page')
-    bookId = id
-    data = get_response('http://api.zhuishushenqi.com/mix-atoc/' + str(bookId))
+    book_id = request.args.get('book_id')
+    source_id = source_id
+    data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
     lis = []
     l = []
-    chap = data.get('mixToc').get('chapters')
+    chap = data.get('chapters')
     page_count = int(len(chap) / Config.CHAPTER_PER_PAGE)
     if len(chap) % Config.CHAPTER_PER_PAGE == 0:
         page_count -= 1
@@ -154,32 +157,47 @@ def chapter(id):
         })
         i += 1
 
-    return render_template('chapter.html', data=l, title='章节列表', page_count=page_count, page=page, id=bookId)
+    form = JumpForm()
+    if form.validate_on_submit():
+        return render_template('chapter.html', data=l, title='章节列表', page_count=page_count, page=form.page.data,
+                               source_id=source_id,
+                               book_id=book_id, form=form)
+
+    return render_template('chapter.html', data=l, title='章节列表', page_count=page_count, page=page, source_id=source_id,
+                           book_id=book_id, form=form)
 
 
 @app.route('/read/', methods=['GET'])
 # @login_required
 def read():
     index = int(request.args.get('index'))
-    bookId = request.args.get('bookId')
-    data = get_response('http://api.zhuishushenqi.com/mix-atoc/' + str(bookId))
+    source_id = request.args.get('source_id')
+    book_id = request.args.get('book_id')
+    data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
     page = int(index / Config.CHAPTER_PER_PAGE)
-    chap = data.get('mixToc').get('chapters')
+    chap = data.get('chapters')
     title = chap[index]['title']
     url = chap[index]['link']
     chapter_url = Config.CHAPTER_DETAIL.format(url.replace('/', '%2F').replace('?', '%3F'))
     data = get_response(chapter_url)
-    body = data.get('chapter').get('body')
+    body = data.get('chapter').get('cpContent')
+    if not body:
+        body = data.get('chapter').get('body')
     lis = body.split('\n')
+    li = []
+    for l in lis:
+        if l != '' and l != '\t':
+            li.append(l)
 
     if current_user.is_authenticated:
-        s = Subscribe.query.filter(Subscribe.book_id == bookId, Subscribe.user == current_user).first()
+        s = Subscribe.query.filter(Subscribe.book_id == book_id, Subscribe.user == current_user).first()
         s.chapter = index
+        s.source_id = source_id
         db.session.commit()
 
-    return render_template('read.html', body=lis, title=title, next=(index + 1) if len(chap) - index > 1 else None,
+    return render_template('read.html', body=li, title=title, next=(index + 1) if len(chap) - index > 1 else None,
                            pre=(index - 1) if index > 0 else None,
-                           bookId=bookId, page=page)
+                           book_id=book_id, page=page, source_id=source_id)
 
 
 # @app.route('/search/', methods=['GET', 'POST'])
@@ -215,24 +233,50 @@ def local2utc(local_st):
 
 @app.route('/book_detail', methods=['GET'])
 def book_detail():
-    bookId = request.args.get('id')
-    data = get_response('http://api.zhuishushenqi.com/book/' + bookId)
+    book_id = request.args.get('book_id')
+    data = get_response('http://api.zhuishushenqi.com/book/' + book_id)
     t = data['updated']  # = datetime(data['updated']).strftime('%Y-%m-%d %H:%M:%S')
     t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
     data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
     lis = data.get('longIntro').split('\n')
     data['longIntro'] = lis
     if current_user.is_authenticated:
-        s = current_user.subscribing.filter(Subscribe.book_id == bookId).first()
+        s = current_user.subscribing.filter(Subscribe.book_id == book_id).first()
         if s:
             data['is_subscribe'] = True
+            if s.source_id:
+                source_id = s.source_id
+            else:
+                dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book={0}'.format(book_id))
+                s.source_id = dd[0]['_id']
+                db.session.commit()
+                source_id = dd[0]['_id']
             c = s.chapter
             if not c:
                 c = 0
             data['reading'] = c
-            d = get_response('http://api.zhuishushenqi.com/mix-atoc/' + str(bookId))
+            d = get_response('http://api.zhuishushenqi.com/mix-atoc/' + str(book_id))
             chap = d.get('mixToc').get('chapters')
             # chapter_title = chap[int(c)]['title']
-            data['readingChapter'] = chap[int(c)]['title']
+            if int(c) + 1 > len(chap):
+                data['readingChapter'] = chap[-1]['title']
+            else:
+                data['readingChapter'] = chap[int(c)]['title']
+        else:
+            dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
+            source_id = dd[0]['_id']
 
-    return render_template('book_detail.html', data=data, title=data.get('title'))
+    return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id, book_id=book_id)
+
+
+@app.route('/source/<book_id>', methods=['GET'])
+def source(book_id):
+    page = request.args.get('page')
+    data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
+    for s in data:
+        t = s['updated']
+        t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
+        s['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
+    if not page:
+        page = 0
+    return render_template('source.html', data=data, title='换源', page=page, book_id=book_id)

@@ -11,11 +11,12 @@
     {% endfor %}
     <p>最近更新：{{ data.get('updated') }}</p>
     <p>最新章节：{{ data.get('lastChapter') }}</p>
-    <a href="/chapter/{{ data.get('_id') }}?page=0">章节列表</a><br>
+    <a href="{{ url_for('chapter',source_id=source_id,book_id=book_id,page=0) }}">章节列表</a><br>
+    <a href="{{ url_for('source',book_id=book_id) }}">换源</a><br>
     {% if not current_user.is_anonymous %}
         {% if data.get('is_subscribe') %}
             <p>阅读进度：<a
-                    href="{{ url_for('read',bookId=data.get('_id'),index=data.get('reading')) }}">{{ data.get('readingChapter') }}</a>
+                    href="{{ url_for('read',book_id=data.get('_id'),index=data.get('reading'),source_id=source_id) }}">{{ data.get('readingChapter') }}</a>
             </p>
             <a href="{{ url_for('unsubscribe',id=data.get('_id')) }}">取消订阅</a>
         {% else %}

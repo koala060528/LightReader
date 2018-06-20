@@ -9,7 +9,7 @@
         {% for book in data.get('subscribe') %}
             <table>
             <tr>
-                <a href="{{ url_for('book_detail',id=book['_id']) }}">{{ book['title'] }}</a>
+                <a href="{{ url_for('book_detail',book_id=book['_id']) }}">{{ book['title'] }}</a>
 
             </tr>
             <tr>

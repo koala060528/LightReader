@@ -1,37 +1,38 @@
 {% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
     <p>
         {% for c in data %}
-            <a href="{{ url_for('read',index=c.index,bookId=id) }}">{{ c.title }}</a><br>
+            <a href="{{ url_for('read',index=c.index,source_id=source_id,book_id=book_id) }}">{{ c.title }}</a><br>
         {% endfor %}
     </p>
     <hr>
     <tr>
         <th>
             {% if page != 0 %}
-                <a href="{{ url_for('chapter',id=id,page=0) }}">首页</a>
+                <a href="{{ url_for('chapter',source_id=source_id,page=0,book_id=book_id) }}">首页</a>
             {% else %}
                 首页
             {% endif %}
         </th>
         <th>
             {% if page != 0 %}
-                <a href="{{ url_for('chapter',id=id,page=page - 1) }}">上一页</a>
+                <a href="{{ url_for('chapter',source_id=source_id,page=page - 1,book_id=book_id) }}">上一页</a>
             {% else %}
                 上一页
             {% endif %}
         </th>
         <th>
             {% if page != page_count %}
-                <a href="{{ url_for('chapter',id=id,page=page + 1) }}">下一页</a>
+                <a href="{{ url_for('chapter',source_id=source_id,page=page + 1,book_id=book_id) }}">下一页</a>
             {% else %}
                 下一页
             {% endif %}
         </th>
         <th>
             {% if page != page_count %}
-                <a href="{{ url_for('chapter',id=id,page=page_count) }}">尾页</a>
+                <a href="{{ url_for('chapter',source_id=source_id,page=page_count,book_id=book_id) }}">尾页</a>
             {% else %}
                 尾页
             {% endif %}
@@ -39,9 +40,10 @@
     </tr>
     <tr>
         <th>
-            <form action="/chapter/{{ id }}">
-                <input type="text" name="page" value="">
-                <input type="submit" value="跳转">
+            <form action="{{ url_for('chapter',source_id=source_id)}}">
+                {{ wtf.quick_form(form) }}
+                {#                <input type="text" name="page" value="">#}
+                {#                <input type="submit" value="跳转">#}
             </form>
         </th>
     </tr>

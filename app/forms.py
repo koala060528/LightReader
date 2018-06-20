@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField
 from wtforms.validators import Email, DataRequired, ValidationError, EqualTo
 from app.models import User
 
@@ -43,3 +43,8 @@ class RegistrationForm(FlaskForm):
 class SearchForm(FlaskForm):
     search = StringField(validators=[DataRequired()])
     submit = SubmitField('搜索')
+
+
+class JumpForm(FlaskForm):
+    page = IntegerField('页码', validators=[DataRequired()])
+    submit = SubmitField('跳转')

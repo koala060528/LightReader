@@ -1,7 +1,7 @@
 from app import db, login
 from flask_login import UserMixin
 from datetime import datetime
-from werkzeug.security import check_password_hash,generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 # subscribe = db.Table('subscribe',
@@ -12,10 +12,11 @@ from werkzeug.security import check_password_hash,generate_password_hash
 
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
-    id = db.Column(db.Integer,primary_key=True)
-    name = db.Column(db.String(20),unique=True,nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20), unique=True, nullable=False)
     # email = db.Column(db.String(50),unique=True,nullable=False)
     password_hash = db.Column(db.String(128))
+
     # last_seen = db.Column(db.DateTime,default=datetime.now())
 
     # subscribing = db.relationship('Book',
@@ -27,11 +28,11 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User {%s}>' % self.name
 
-    def set_password(self,password):
+    def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self,password):
-        return check_password_hash(self.password_hash,password)
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     # # 以下几个方法存在不明bug
     # def is_subscribing(self,book):
@@ -53,7 +54,7 @@ class Subscribe(db.Model):
     book_id = db.Column(db.String(128))
     book_name = db.Column(db.String(128))
     chapter = db.Column(db.String(128))
-    source = db.Column(db.String(128))
+    source_id = db.Column(db.String(128))
 
     user = db.relationship('User', backref=db.backref('subscribing', lazy='dynamic'))
 

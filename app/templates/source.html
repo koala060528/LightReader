@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    {% if data %}
+        {% for s in data %}
+            <th>
+            <a href="{{ url_for('chapter',source_id=s.get('_id'),page=page,book_id=book_id) }}">{{ s.get('name') }}</a>
+            </th>
+            <br>
+            <th>
+            最新章节：{{ s.get('lastChapter') }} -- {{ s.get('updated') }}
+            </th>
+            <hr>
+        {% endfor %}
+    {% endif %}
+{% endblock %}

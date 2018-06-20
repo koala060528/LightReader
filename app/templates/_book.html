@@ -1,7 +1,7 @@
 <table class="table table-hover">
     <tr>
         <td width="">
-            <a href="{{ url_for('book_detail', id=book['_id']) }}">
+            <a href="{{ url_for('book_detail', book_id=book['_id']) }}">
                 {{ book['title'] }}
             </a>
             --{{ book['author'] }}<br>
