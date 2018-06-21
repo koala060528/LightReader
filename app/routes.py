@@ -265,8 +265,9 @@ def book_detail():
             if not c:
                 c = 0
             data['reading'] = c
-            d = get_response('http://api.zhuishushenqi.com/mix-atoc/' + str(book_id))
-            chap = d.get('mixToc').get('chapters')
+            dd = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
+            chap = dd.get('chapters')
+
             # chapter_title = chap[int(c)]['title']
             if int(c) + 1 > len(chap):
                 data['readingChapter'] = chap[-1]['title']
