@@ -84,6 +84,14 @@ def index():
     # 获取榜单信息
     # todo
 
+    # 获取分类
+    data = get_response('http://api.zhuishushenqi.com/cats/lv2/statistics')
+    # 预分组
+    # data['male'] = [data['male'][i:i + 3] for i in range(0, len(data['male']), 3)]
+    # data['female'] = [data['female'][i:i + 3] for i in range(0, len(data['female']), 3)]
+    # data['press'] = [data['press'][i:i + 3] for i in range(0, len(data['press']), 3)]
+    dic['classify'] = data
+
     # 搜索框
     form = SearchForm()
     if form.validate_on_submit():
@@ -93,7 +101,7 @@ def index():
             lis.append(book)
         return render_template('book_list.html', data=lis, title='搜索结果', form=form)
 
-    return render_template('index.html', data=dic, form=form, title='首页')
+    return render_template('index.html', data=dic, form=form, title='首页', limit=Config.CHAPTER_PER_PAGE)
 
 
 @app.route('/subscribe/')
@@ -282,3 +290,25 @@ def source(book_id):
     if not page:
         page = 0
     return render_template('source.html', data=data[1:], title='换源', page=page, book_id=book_id)
+
+
+@app.route('/rank', methods=['GET'])
+def rank():
+    gender = request.args.get('gender')
+    _type = request.args.get('type')
+    major = request.args.get('major')
+    start = request.args.get('start')
+    # limit = request.args.get('limit')
+    # page = request.args.get('page')
+    # tag = request.args.get('tag')
+    limit = str(Config.CHAPTER_PER_PAGE)
+    data = get_response(
+        'http://api.zhuishushenqi.com/book/by-categories?' + (('&major=' + major) if major else '') + (
+            ('&gender=' + gender) if gender else '') + (('&type=' + _type) if _type else '') + (
+            ('&start=' + start) if start else '') + (('&limit=' + limit) if limit else ''))
+    data = data['books']
+    next_page = True
+    if len(data) < Config.CHAPTER_PER_PAGE:
+        next_page = False
+    return render_template('rank.html', data=data, title='探索', gender=gender, type=_type, major=major, start=int(start),
+                           limit=int(limit), next=next_page)

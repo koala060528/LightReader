@@ -41,9 +41,12 @@
     <tr>
         <th>
             <form action="/chapter/{{ source_id }}?book_id={{ book_id }}", method="post">
-                {{ wtf.quick_form(form) }}
+{#                {{ wtf.quick_form(form) }}#}
                 {#                <input type="text" name="page" value="">#}
                 {#                <input type="submit" value="跳转">#}
+                {{ form.hidden_tag() }}
+                {{ form.page(size=10) }}
+                {{ form.submit() }}
             </form>
         </th>
     </tr>

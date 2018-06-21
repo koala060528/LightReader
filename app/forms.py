@@ -41,7 +41,7 @@ class RegistrationForm(FlaskForm):
 
 
 class SearchForm(FlaskForm):
-    search = StringField(validators=[DataRequired()])
+    search = StringField('搜索', validators=[DataRequired()])
     submit = SubmitField('搜索')
 
 

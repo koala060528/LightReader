@@ -1,11 +1,11 @@
-<table class="table table-hover">
+
     <tr>
         <td width="">
             <a href="{{ url_for('book_detail', book_id=book['_id']) }}">
                 {{ book['title'] }}
             </a>
             --{{ book['author'] }}<br>
-            <p>字数：{{ book['wordCount'] }}--热度：{{ book['latelyFollower'] }}--留存率：{{ book['retentionRatio'] }}</p>
+            字数：{{ book['wordCount'] }}--热度：{{ book['latelyFollower'] }}--留存率：{{ book['retentionRatio'] }}
         </td>
     </tr>
-</table>
+    <hr>

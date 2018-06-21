@@ -5,16 +5,17 @@
     {% if not current_user.is_anonymous %}
         <p>欢迎，{{ current_user.name }}</p>
         <hr>
-       <p>订阅列表</p>
+        <h1 style="font-size: large">订阅</h1>
+        {#        <p style="font-weight: bold">订阅列表</p>#}
         {% for book in data.get('subscribe') %}
             <table>
-            <tr>
-                <a href="{{ url_for('book_detail',book_id=book['_id']) }}">{{ book['title'] }}</a>
+                <tr>
+                    <a href="{{ url_for('book_detail',book_id=book['_id']) }}">{{ book['title'] }}</a>
 
-            </tr>
-            <tr>
-                <p>{{ book['last_chapter'] }}</p>
-            </tr>
+                </tr>
+                <tr>
+                    <p>{{ book['last_chapter'] }}</p>
+                </tr>
             </table>
 
         {% endfor %}
@@ -22,10 +23,61 @@
     {% endif %}
 
     {% if form %}
-        {{ wtf.quick_form(form) }}
+        <h2 style="font-size: large">搜索</h2>
+        {#        {{ wtf.quick_form(form) }}#}
+        <form action="" , method="post">
+            {{ form.hidden_tag() }}
+            {{ form.search(size=32) }}
+            {{ form.submit() }}
+        </form>
         <hr>
     {% endif %}
 
+
+    {% if data['classify'] %}
+        <h3 style="font-size: large">发现</h3>
+        <table>
+            <tr><p>男生</p></tr>
+            <tr>
+                {% for i in data['classify']['male'] %}
+
+                    <tr>
+                        <a href="{{ url_for('rank',gender='male',start=0,limit=limit,type='hot',major=i['name']) }}">{{ i['name'] }}</a>
+                        &nbsp;
+                    </tr>
+
+                {% endfor %}
+            </tr>
+        </table>
+        <br>
+        <table>
+            <tr><p>女生</p></tr>
+            <tr>
+                {% for i in data['classify']['female'] %}
+
+                    <tr>
+                        <a href="{{ url_for('rank',gender='female',start=0,limit=limit,type='hot',major=i['name']) }}">{{ i['name'] }}</a>
+                        &nbsp;
+                    </tr>
+
+                {% endfor %}
+            </tr>
+        </table>
+        <br>
+        <table>
+            <tr><p>出版</p></tr>
+            <tr>
+                {% for i in data['classify']['press'] %}
+
+                    <tr>
+                        <a href="{{ url_for('rank',gender='press',start=0,limit=limit,type='hot',major=i['name']) }}">{{ i['name'] }}</a>
+                        &nbsp;
+                    </tr>
+
+                {% endfor %}
+            </tr>
+        </table>
+    {% endif %}
 
 
 {% endblock %}
