@@ -40,7 +40,7 @@
     </tr>
     <tr>
         <th>
-            <form action="{{ url_for('chapter',source_id=source_id)}}">
+            <form action="/chapter/{{ source_id }}?book_id={{ book_id }}", method="post">
                 {{ wtf.quick_form(form) }}
                 {#                <input type="text" name="page" value="">#}
                 {#                <input type="submit" value="跳转">#}

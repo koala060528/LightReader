@@ -132,15 +132,17 @@ def unsubscribe():
     return redirect(next_page)
 
 
-@app.route('/chapter/<source_id>', methods=['GET'])
+@app.route('/chapter/<source_id>', methods=['GET', 'POST'])
 def chapter(source_id):
     page = request.args.get('page')
     book_id = request.args.get('book_id')
-    source_id = source_id
     data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
     lis = []
     l = []
     chap = data.get('chapters')
+    form = JumpForm()
+    if form.validate_on_submit():  # 必须使用post方法才能正产传递参数
+        page = form.page.data
     page_count = int(len(chap) / Config.CHAPTER_PER_PAGE)
     if len(chap) % Config.CHAPTER_PER_PAGE == 0:
         page_count -= 1
@@ -157,7 +159,6 @@ def chapter(source_id):
         })
         i += 1
 
-    form = JumpForm()
     if form.validate_on_submit():
         return render_template('chapter.html', data=l, title='章节列表', page_count=page_count, page=form.page.data,
                                source_id=source_id,
