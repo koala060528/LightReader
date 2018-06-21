@@ -192,9 +192,10 @@ def read():
 
     if current_user.is_authenticated:
         s = Subscribe.query.filter(Subscribe.book_id == book_id, Subscribe.user == current_user).first()
-        s.chapter = index
-        s.source_id = source_id
-        db.session.commit()
+        if s:
+            s.chapter = index
+            s.source_id = source_id
+            db.session.commit()
 
     return render_template('read.html', body=li, title=title, next=(index + 1) if len(chap) - index > 1 else None,
                            pre=(index - 1) if index > 0 else None,
