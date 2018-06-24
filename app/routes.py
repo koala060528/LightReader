@@ -116,7 +116,7 @@ def subscribe():
 
     data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + _id)
 
-    s = Subscribe(user=current_user, book_id=_id, book_name=name, source_id=data[1]['_id'],chapter=0)
+    s = Subscribe(user=current_user, book_id=_id, book_name=name, source_id=data[1]['_id'], chapter=0)
     db.session.add(s)
     db.session.commit()
     flash('订阅成功')
@@ -189,7 +189,10 @@ def read():
     url = chap[index]['link']
     chapter_url = Config.CHAPTER_DETAIL.format(url.replace('/', '%2F').replace('?', '%3F'))
     data = get_response(chapter_url)
-    body = data.get('chapter').get('cpContent')
+    if data['ok']:
+        body = data.get('chapter').get('cpContent')
+    else:
+        body = '此来源暂不可用'
     if not body:
         body = data.get('chapter').get('body')
     lis = body.split('\n')
@@ -270,8 +273,9 @@ def book_detail():
         else:
             dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
             for i in dd:
-                if i['source'] != 'zhuishuvip':
+                if i['source'] == 'my176':
                     source_id = i['_id']
+                    break
     else:
         dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book={0}'.format(book_id))
         source_id = dd[0]['_id']
