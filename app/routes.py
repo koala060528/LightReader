@@ -116,7 +116,7 @@ def subscribe():
 
     data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + _id)
 
-    s = Subscribe(user=current_user, book_id=_id, book_name=name, source_id=data[1]['_id'])
+    s = Subscribe(user=current_user, book_id=_id, book_name=name, source_id=data[1]['_id'],chapter=0)
     db.session.add(s)
     db.session.commit()
     flash('订阅成功')
@@ -254,13 +254,7 @@ def book_detail():
         s = current_user.subscribing.filter(Subscribe.book_id == book_id).first()
         if s:
             data['is_subscribe'] = True
-            if s.source_id:
-                source_id = s.source_id
-            else:
-                dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book={0}'.format(book_id))
-                s.source_id = dd[0]['_id']
-                db.session.commit()
-                source_id = dd[0]['_id']
+            source_id = s.source_id
             c = s.chapter
             if not c:
                 c = 0
@@ -278,6 +272,9 @@ def book_detail():
             for i in dd:
                 if i['source'] != 'zhuishuvip':
                     source_id = i['_id']
+    else:
+        dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book={0}'.format(book_id))
+        source_id = dd[0]['_id']
 
     return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id, book_id=book_id)
 
