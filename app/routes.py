@@ -264,7 +264,8 @@ def book_detail():
             data['reading'] = c
             dd = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
             chap = dd.get('chapters')
-
+            if chap[-1].get('title') == data.get('lastChapter'):
+                lastIndex = len(chap) - 1  # 用来标记最新章节
             # chapter_title = chap[int(c)]['title']
             if int(c) + 1 > len(chap):
                 data['readingChapter'] = chap[-1]['title']
@@ -280,7 +281,8 @@ def book_detail():
         dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book={0}'.format(book_id))
         source_id = dd[0]['_id']
 
-    return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id, book_id=book_id)
+    return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id, book_id=book_id,
+                           lastIndex=lastIndex)
 
 
 @app.route('/source/<book_id>', methods=['GET'])

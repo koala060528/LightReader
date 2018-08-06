@@ -10,7 +10,14 @@
         </p>
     {% endfor %}
     <p>最近更新：{{ data.get('updated') }}</p>
-    <p>最新章节：{{ data.get('lastChapter') }}</p>
+    {% if lastIndex %}
+        <p>最新章节：
+            <a href="{{ url_for('read',book_id=data.get('_id'),index=lastIndex,source_id=source_id) }}">{{ data.get('lastChapter') }}</a>
+        </p>
+    {% else %}
+        <p>最新章节：{{ data.get('lastChapter') }}</p>
+    {% endif %}
+
     <a href="{{ url_for('chapter',source_id=source_id,book_id=book_id,page=0) }}">章节列表</a><br>
     <a href="{{ url_for('source',book_id=book_id) }}">换源</a><br>
     {% if not current_user.is_anonymous %}
