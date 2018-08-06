@@ -12,8 +12,15 @@ from config import Config
 
 
 def get_response(url):
-    data = requests.get(url).text
-    js = json.loads(data)
+    i = 0
+    while i < 5:
+        js = None
+        try:
+            data = requests.get(url).text
+            js = json.loads(data)
+            break
+        except:
+            i += 1
     return js
 
 
@@ -189,12 +196,15 @@ def read():
     url = chap[index]['link']
     chapter_url = Config.CHAPTER_DETAIL.format(url.replace('/', '%2F').replace('?', '%3F'))
     data = get_response(chapter_url)
-    if data['ok']:
-        body = data.get('chapter').get('cpContent')
+    if not data:
+        body = '检测到阅读接口发生故障，请刷新页面或稍后再试'
     else:
-        body = '此来源暂不可用'
-    if not body:
-        body = data.get('chapter').get('body')
+        if data['ok']:
+            body = data.get('chapter').get('cpContent')
+        else:
+            body = '此来源暂不可用，请换源'
+        if not body:
+            body = data.get('chapter').get('body')
     lis = body.split('\n')
     li = []
     for l in lis:
