@@ -21,6 +21,9 @@
         <a href="{{ url_for('chapter',book_id=book_id,page=page,source_id=source_id) }}">目录</a>
     </tr>
     <tr>
+        <a href="{{ url_for('book_detail',book_id=book_id) }}">详情</a>
+    </tr>
+    <tr>
         <a href="{{ url_for('source', book_id=book_id,page=page,source_id=source_id) }}">换源</a>
     </tr>
     {% if next is not none %}
