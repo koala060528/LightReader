@@ -23,20 +23,24 @@
         {% if data.get('is_subscribe') %}
             <p>阅读进度：&nbsp;<a
                     href="{{ url_for('read',book_id=data.get('_id'),index=data.get('reading'),source_id=source_id) }}">{{ data.get('readingChapter') }}</a>
+                {% if next %}
+                    <a href="
+                            {{ url_for('read',book_id=data.get('_id'),index=next,source_id=source_id) }}">下一章</a>
+                {% endif %}
             </p>
         {% endif %}
     {% endif %}
     <p>阅读选项：
-    <a href="{{ url_for('chapter',source_id=source_id,book_id=book_id,page=0) }}">章节列表</a>&nbsp;&nbsp;
-    <a href="{{ url_for('source',book_id=book_id) }}">换源</a>&nbsp;&nbsp;
-    {% if not current_user.is_anonymous %}
+        <a href="{{ url_for('chapter',source_id=source_id,book_id=book_id,page=0) }}">章节列表</a>&nbsp;&nbsp;
+        <a href="{{ url_for('source',book_id=book_id) }}">换源</a>&nbsp;&nbsp;
+        {% if not current_user.is_anonymous %}
 
-        {% if data.get('is_subscribe') %}
-            <a href="{{ url_for('unsubscribe',id=data.get('_id')) }}">取消订阅</a>
-        {% else %}
-            <a href="{{ url_for('subscribe',id=data.get('_id')) }}">订阅</a>
+            {% if data.get('is_subscribe') %}
+                <a href="{{ url_for('unsubscribe',id=data.get('_id')) }}">取消订阅</a>
+            {% else %}
+                <a href="{{ url_for('subscribe',id=data.get('_id')) }}">订阅</a>
+            {% endif %}
         {% endif %}
-    {% endif %}
     </p>
 
 {% endblock %}
