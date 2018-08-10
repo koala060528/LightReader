@@ -17,7 +17,7 @@ class Config(object):
     LANGUAGES = ['en-US', 'zh-CH']
 
     # 每页显示的blog数量
-    CHAPTER_PER_PAGE = 20
+    CHAPTER_PER_PAGE = 50
 
     # api url
     # 书籍详情页

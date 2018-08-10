@@ -12,8 +12,15 @@ from config import Config
 
 
 def get_response(url):
-    data = requests.get(url).text
-    js = json.loads(data)
+    i = 0
+    while i < 5:
+        js = None
+        try:
+            data = requests.get(url).text
+            js = json.loads(data)
+            break
+        except:
+            i += 1
     return js
 
 
@@ -189,12 +196,15 @@ def read():
     url = chap[index]['link']
     chapter_url = Config.CHAPTER_DETAIL.format(url.replace('/', '%2F').replace('?', '%3F'))
     data = get_response(chapter_url)
-    if data['ok']:
-        body = data.get('chapter').get('cpContent')
+    if not data:
+        body = '检测到阅读接口发生故障，请刷新页面或稍后再试'
     else:
-        body = '此来源暂不可用'
-    if not body:
-        body = data.get('chapter').get('body')
+        if data['ok']:
+            body = data.get('chapter').get('cpContent')
+        else:
+            body = '此来源暂不可用，请换源'
+        if not body:
+            body = data.get('chapter').get('body')
     lis = body.split('\n')
     li = []
     for l in lis:
@@ -253,6 +263,7 @@ def book_detail():
     data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
     lis = data.get('longIntro').split('\n')
     data['longIntro'] = lis
+    lastIndex = None
     if current_user.is_authenticated:
         s = current_user.subscribing.filter(Subscribe.book_id == book_id).first()
         if s:
@@ -264,7 +275,8 @@ def book_detail():
             data['reading'] = c
             dd = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
             chap = dd.get('chapters')
-
+            if chap[-1].get('title') == data.get('lastChapter'):
+                lastIndex = len(chap) - 1  # 用来标记最新章节
             # chapter_title = chap[int(c)]['title']
             if int(c) + 1 > len(chap):
                 data['readingChapter'] = chap[-1]['title']
@@ -280,7 +292,9 @@ def book_detail():
         dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book={0}'.format(book_id))
         source_id = dd[0]['_id']
 
-    return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id, book_id=book_id)
+    return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id, book_id=book_id,
+                           lastIndex=lastIndex,
+                           next=int(data['reading']) + 1 if lastIndex > int(data['reading']) else None)
 
 
 @app.route('/source/<book_id>', methods=['GET'])
