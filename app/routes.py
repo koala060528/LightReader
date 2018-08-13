@@ -294,7 +294,7 @@ def book_detail():
 
     return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id, book_id=book_id,
                            lastIndex=lastIndex,
-                           next=(int(data['reading']) + 1) if data.get('reading') is not None and lastIndex > int(data['reading']) else None)
+                           next=(int(data['reading']) + 1) if data.get('reading') is not None and lastIndex is not None and lastIndex > int(data['reading']) else None)
 
 
 @app.route('/source/<book_id>', methods=['GET'])
