@@ -285,9 +285,9 @@ def book_detail():
     lis = data.get('longIntro').split('\n')
     data['longIntro'] = lis
     lastIndex = None
-    can_download = False
+    # can_download = False
     if current_user.is_authenticated:
-        can_download = current_user.can_download
+        # can_download = current_user.can_download
         s = current_user.subscribing.filter(Subscribe.book_id == book_id).first()
         if s:
             data['is_subscribe'] = True
@@ -319,7 +319,7 @@ def book_detail():
                            lastIndex=lastIndex,
                            next=(int(data['reading']) + 1) if data.get(
                                'reading') is not None and lastIndex is not None and lastIndex > int(
-                               data['reading']) else None,can_download = can_download)
+                               data['reading']) else None)
 
 
 @app.route('/source/<book_id>', methods=['GET'])
@@ -359,6 +359,11 @@ def rank():
 
 @app.route('/api/download', methods=['GET'])
 def download():
+    if not current_user.is_authenticated:
+        return render_template('permission_denied.html',title = '权限不足')
+    else:
+        if not current_user.can_download:
+            return render_template('permission_denied.html', title='权限不足')
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
     # 获取书籍简介
