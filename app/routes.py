@@ -379,7 +379,7 @@ def download():
     fileName = os.path.join(path, book_title + '.txt')
     if os.path.exists(fileName):
         os.remove(fileName)
-    with open(fileName, 'w', encoding='utf-8') as f:
+    with open(fileName, 'w', encoding='gbk') as f:
         f.writelines(
             ['    ', book_title, '\n', '\n', '    ', author, '\n', '\n', '    ', longIntro, '\n', '\n'])
         for chapter in data.get('chapters'):
@@ -387,6 +387,9 @@ def download():
             li = get_text(chapter.get('link'))
             f.writelines(['\n', '    ', title, '\n', '\n'])
             for sentence in li:
-                f.writelines(['    ', sentence, '\n', '\n'])
+                try:
+                    f.writelines(['    ', sentence, '\n', '\n'])
+                except:
+                    pass
     return render_template('view_documents.html', title=book_title + '--下载', url=text.url(book_title + '.txt'),
                            book_title=book_title + '.txt')
