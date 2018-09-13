@@ -26,3 +26,6 @@ class Config(object):
     CHAPTER_LIST = 'http://api.zhuishushenqi.com/mix-atoc/{book_id}?view=chapters'
     # 章节详情
     CHAPTER_DETAIL = 'http://chapter2.zhuishushenqi.com/chapter/{0}'
+
+    # 文件目录
+    UPLOADS_DEFAULT_DEST = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'files')

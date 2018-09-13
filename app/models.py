@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(20), unique=True, nullable=False)
     # email = db.Column(db.String(50),unique=True,nullable=False)
     password_hash = db.Column(db.String(128))
+    can_download = db.Column(db.Boolean)  # 表示用户是否有下载权限，0表示没有，1表示有
 
     # last_seen = db.Column(db.DateTime,default=datetime.now())
 
