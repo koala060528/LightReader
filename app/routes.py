@@ -24,13 +24,13 @@ def get_response(url):
     return js
 
 
-# @app.before_request
-# def before_request():
-#     if current_user.is_authenticated:
-#         current_user.last_seen = datetime.utcnow()
-#         # 教程上说不需要加这一行，亲测需要
-#         db.session.add(current_user)
-#         db.session.commit()
+@app.before_request
+def before_request():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.now()
+        # 教程上说不需要加这一行，亲测需要
+        db.session.add(current_user)
+        db.session.commit()
 
 
 @app.route('/login', methods=['GET', 'POST'])
