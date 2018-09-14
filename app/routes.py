@@ -27,7 +27,7 @@ def get_response(url):
 @app.before_request
 def before_request():
     if current_user.is_authenticated:
-        current_user.last_seen = datetime.now()
+        current_user.last_seen = datetime.utcnow()
         current_user.user_ip = request.headers.environ.get('REMOTE_ADDR')
         current_user.user_agent = request.headers.environ.get('HTTP_USER_AGENT')
         # 教程上说不需要加这一行，亲测需要
@@ -219,7 +219,7 @@ def read():
         if s:
             s.chapter = index
             s.source_id = source_id
-            s.time = datetime.now()
+            s.time = datetime.utcnow()
             db.session.commit()
 
     return render_template('read.html', body=li, title=title, next=(index + 1) if len(chap) - index > 1 else None,
