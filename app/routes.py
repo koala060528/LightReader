@@ -358,6 +358,7 @@ def rank():
 
 
 @app.route('/api/download', methods=['GET'])
+@login_required
 def download():
     if not current_user.is_authenticated:
         return render_template('permission_denied.html',title = '权限不足')
