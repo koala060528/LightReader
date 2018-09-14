@@ -189,6 +189,7 @@ def chapter(source_id):
 # @login_required
 def read():
     index = int(request.args.get('index'))
+    print(request.headers.environ)
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
     data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
