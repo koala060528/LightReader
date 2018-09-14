@@ -217,6 +217,7 @@ def read():
         if s:
             s.chapter = index
             s.source_id = source_id
+            s.time = datetime.now()
             db.session.commit()
 
     return render_template('read.html', body=li, title=title, next=(index + 1) if len(chap) - index > 1 else None,
