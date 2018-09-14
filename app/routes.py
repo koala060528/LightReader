@@ -28,6 +28,8 @@ def get_response(url):
 def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.now()
+        current_user.user_ip = request.headers.environ.get('REMOTE_ADDR')
+        current_user.user_agent = request.headers.environ.get('HTTP_USER_AGENT')
         # 教程上说不需要加这一行，亲测需要
         db.session.add(current_user)
         db.session.commit()

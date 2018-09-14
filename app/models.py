@@ -18,6 +18,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     can_download = db.Column(db.Boolean)  # 表示用户是否有下载权限，0表示没有，1表示有
     last_seen = db.Column(db.DateTime,default=datetime.now())
+    user_ip = db.Column(db.String(20))
+    user_agent = db.Column(db.String(256))
 
     # subscribing = db.relationship('Book',
     #                              secondary=subscribe,
