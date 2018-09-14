@@ -193,7 +193,6 @@ def read():
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
     data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
-    page = int(index / Config.CHAPTER_PER_PAGE)
     chap = data.get('chapters')
     title = chap[index]['title']
     url = chap[index]['link']
