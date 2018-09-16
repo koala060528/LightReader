@@ -1,5 +1,5 @@
 from app import app, db, text
-from app.models import User, Subscribe
+from app.models import User, Subscribe, Download
 import json, os
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from app.forms import LoginForm, RegistrationForm, SearchForm, JumpForm
@@ -9,6 +9,7 @@ from datetime import datetime
 from time import time
 import requests
 from config import Config
+from hashlib import md5
 
 
 def get_response(url):
@@ -364,29 +365,52 @@ def rank():
 @login_required
 def download():
     if not current_user.is_authenticated:
-        return render_template('permission_denied.html',title = '权限不足')
+        return render_template('permission_denied.html', title='权限不足')
     else:
         if not current_user.can_download:
             return render_template('permission_denied.html', title='权限不足')
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
-    # 获取书籍简介
-    data = get_response('http://api.zhuishushenqi.com/book/' + book_id)
-    book_title = data.get('title')
-    author = data.get('author')
-    longIntro = data.get('longIntro')
+
     # 获取章节信息
     data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
     path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
     if not os.path.exists(path):
         os.makedirs(path)
-    fileName = os.path.join(path, book_title + '.txt')
-    if os.path.exists(fileName):
-        os.remove(fileName)
-    with open(fileName, 'w', encoding='gbk') as f:
-        f.writelines(
-            ['    ', book_title, '\n', '\n', '    ', author, '\n', '\n', '    ', longIntro, '\n', '\n'])
-        for chapter in data.get('chapters'):
+
+    # 定义文件名
+    fileName = md5((book_id + source_id).encode("utf8")).hexdigest()[:10] + '.txt'
+    # fileName = os.path.join(path, book_title + '.txt')
+    # if os.path.exists(fileName):
+    #     os.remove(fileName)
+    d = Download.query.filter_by(book_id=book_id, source_id=source_id).first()
+    chapter_list = data.get('chapters')
+    if d:
+        # 截取需要下载的章节列表
+        new = False
+        download_list = chapter_list[d.chapter + 1:]
+        book_title = d.book_name
+        d.chapter = len(chapter_list) - 1
+        d.time = datetime.utcnow()
+    else:
+        new = True
+        # 获取书籍简介
+        data = get_response('http://api.zhuishushenqi.com/book/' + book_id)
+        book_title = data.get('title')
+        author = data.get('author')
+        longIntro = data.get('longIntro')
+        download_list = chapter_list
+        d = Download(user=current_user, book_id=book_id, source_id=source_id, chapter=len(chapter_list) - 1,
+                     book_name=book_title, time=datetime.utcnow(), txt_name=fileName)
+
+    db.session.add(d)
+    db.session.commit()
+
+    with open(os.path.join(path,fileName), 'a', encoding='gbk') as f:
+        if new:
+            f.writelines(
+                ['    ', book_title, '\n', '\n', '    ', author, '\n', '\n', '    ', longIntro, '\n', '\n'])
+        for chapter in download_list:
             title = chapter.get('title')
             li = get_text(chapter.get('link'))
             f.writelines(['\n', '    ', title, '\n', '\n'])
@@ -395,5 +419,5 @@ def download():
                     f.writelines(['    ', sentence, '\n', '\n'])
                 except:
                     pass
-    return render_template('view_documents.html', title=book_title + '--下载', url=text.url(book_title + '.txt'),
+    return render_template('view_documents.html', title=book_title + '--下载', url=text.url(fileName),
                            book_title=book_title + '.txt')

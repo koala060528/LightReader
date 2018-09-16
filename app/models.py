@@ -91,7 +91,7 @@ class Download(db.Model):
     time = db.Column(db.DateTime, default=datetime.now())
     txt_name = db.Column(db.String(128))
 
-    user = db.relationship('User', backref=db.backref('subscribing', lazy='dynamic'))
+    user = db.relationship('User', backref=db.backref('downloaded', lazy='dynamic'))
 
     def __repr__(self):
         return '<User>{%s} download <book>%s' % (self.user.name, self.book_name)
