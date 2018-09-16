@@ -17,7 +17,7 @@ class User(UserMixin, db.Model):
     # email = db.Column(db.String(50),unique=True,nullable=False)
     password_hash = db.Column(db.String(128))
     can_download = db.Column(db.Boolean)  # 表示用户是否有下载权限，0表示没有，1表示有
-    last_seen = db.Column(db.DateTime,default=datetime.now())
+    last_seen = db.Column(db.DateTime, default=datetime.now())
     user_ip = db.Column(db.String(20))
     user_agent = db.Column(db.String(256))
 
@@ -57,7 +57,7 @@ class Subscribe(db.Model):
     book_name = db.Column(db.String(128))
     chapter = db.Column(db.String(128))
     source_id = db.Column(db.String(128))
-    time = db.Column(db.DateTime,default=datetime.now())
+    time = db.Column(db.DateTime, default=datetime.now())
 
     user = db.relationship('User', backref=db.backref('subscribing', lazy='dynamic'))
 
@@ -79,6 +79,22 @@ class Subscribe(db.Model):
 #
 #     def __repr__(self):
 #         return '<Book {%s}>' % self.name
+
+class Download(db.Model):
+    __tablename__ = 'download'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    book_id = db.Column(db.String(128))
+    book_name = db.Column(db.String(128))
+    chapter = db.Column(db.Integer)
+    source_id = db.Column(db.String(128))
+    time = db.Column(db.DateTime, default=datetime.now())
+    txt_name = db.Column(db.String(128))
+
+    user = db.relationship('User', backref=db.backref('subscribing', lazy='dynamic'))
+
+    def __repr__(self):
+        return '<User>{%s} download <book>%s' % (self.user.name, self.book_name)
 
 
 @login.user_loader
