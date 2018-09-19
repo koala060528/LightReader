@@ -73,11 +73,12 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', form=form, title='注册')
 
+
 @app.route('/delete_user/<id>', methods=['GET'])
 def delete_user(id):
     if not current_user.is_admin:
         return render_template('permission_denied.html', message=None, title='权限不足')
-    u=User.query.get(id)
+    u = User.query.get(id)
     db.session.delete(u)
     db.session.commit()
     flash('删除用户成功！')
@@ -383,6 +384,12 @@ def download():
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
 
+    d = Download.query.filter_by(book_id=book_id, source_id=source_id).first()
+    # 检测资源锁
+    if d and d.lock:
+        flash('文件正在生成，请稍后再试！')
+        return redirect(url_for('book_detail', book_id=book_id))
+
     # 获取章节信息
     data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
     path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
@@ -394,7 +401,7 @@ def download():
     # fileName = os.path.join(path, book_title + '.txt')
     # if os.path.exists(fileName):
     #     os.remove(fileName)
-    d = Download.query.filter_by(book_id=book_id, source_id=source_id).first()
+
     chapter_list = data.get('chapters')
     if d:
         # 截取需要下载的章节列表
@@ -403,6 +410,8 @@ def download():
         book_title = d.book_name
         d.chapter = len(chapter_list) - 1
         d.time = datetime.utcnow()
+        d.lock = True  # 给下载加锁
+        d.chapter_name = chapter_list[len(chapter_list) - 1].get('title')
     else:
         new = True
         # 获取书籍简介
@@ -412,7 +421,8 @@ def download():
         longIntro = data.get('longIntro')
         download_list = chapter_list
         d = Download(user=current_user, book_id=book_id, source_id=source_id, chapter=len(chapter_list) - 1,
-                     book_name=book_title, time=datetime.utcnow(), txt_name=fileName)
+                     book_name=book_title, time=datetime.utcnow(), txt_name=fileName, lock=True,
+                     chapter_name=chapter_list[-1].get('title'))
 
     db.session.add(d)
     db.session.commit()
@@ -430,8 +440,11 @@ def download():
                     f.writelines(['    ', sentence, '\n', '\n'])
                 except:
                     pass
+    d.lock = False  # 给下载解锁
+    db.session.add(d)
+    db.session.commit()
     return render_template('view_documents.html', title=book_title + '--下载', url=text.url(fileName),
-                           book_title=book_title + '.txt')
+                           book_title=book_title)
 
 
 @app.route('/background', methods=['GET'])
@@ -439,7 +452,7 @@ def download():
 def background():
     if not current_user.is_admin:
         return render_template('permission_denied.html', message=None, title='权限不足')
-    return render_template('background.html',title='后台管理')
+    return render_template('background.html', title='后台管理')
 
 
 @app.route('/user_list', methods=['GET'])
@@ -477,14 +490,14 @@ def user_detail(id):
             'book_name': s.book_name,
             'source_id': s.source_id,
             'chapter': s.chapter,
-            'chapter_name':s.chapter_name,
+            'chapter_name': s.chapter_name,
             'time': utc2local(s.time) if s.time else None
         })
     dic['subscribing'] = lis
     return render_template('user_detail.html', dic=dic, title='用户详情--%s' % u.name)
 
 
-@app.route('/change_download_permission/<id>')
+@app.route('/change_download_permission/<id>', methods=['GET'])
 @login_required
 def change_download_permission(id):
     if not current_user.is_admin:
@@ -498,4 +511,63 @@ def change_download_permission(id):
     db.session.commit()
     flash('修改下载权限成功！')
     return redirect(url_for('user_detail', id=id))
+
+
+@app.route('/download_list', methods=['GET'])
+@login_required
+def download_list():
+    if not current_user.is_admin:
+        return render_template('permission_denied.html', message=None, title='权限不足')
+    ds = Download.query.all()
+    lis = list()
+    path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
+    for d in ds:
+        data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(d.source_id))
+        source_name = data.get('name')
+        if os.path.exists(os.path.join(path,d.txt_name)):
+            txt_size = os.path.getsize(os.path.join(path,d.txt_name))
+            txt_size = txt_size/float(1024*1024)
+            txt_size = round(txt_size,2)
+        else:
+            txt_size = '文件缺失'
+        lis.append({
+            'id': d.id,
+            'user_id': d.user_id,
+            'user_name': d.user.name,
+            'book_name': d.book_name,
+            'book_id': d.book_id,
+            'chapter': d.chapter,
+            'source_id': d.source_id,
+            'source_name':source_name,
+            'time': utc2local(d.time) if d.time else None,
+            'txt_name': d.txt_name,
+            'chapter_name': d.chapter_name,
+            'txt_size':txt_size
+        })
+    return render_template('download_list.html', lis=lis, title='下载列表')
+
+
+@app.route('/delete_download_file/<id>',methods=['GET'])
+@login_required
+def delete_download_file(id):
+    if not current_user.is_admin:
+        return render_template('permission_denied.html', message=None, title='权限不足')
+    d = Download.query.get(id)
+
+    path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
+    if os.path.exists(os.path.join(path, d.txt_name)):
+        os.remove(os.path.join(path, d.txt_name))
+    db.session.delete(d)
+    db.session.commit()
+    flash('删除下载项目成功！')
+    return redirect(url_for('download_list'))
+
+@app.route('/download_file/', methods=['GET'])
+@login_required
+def download_file():
+    file_name = request.args.get('file_name')
+    book_name = request.args.get('book_name')
+    path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
+    if os.path.exists(os.path.join(path, file_name)):
+        return render_template('view_documents.html',title='下载文件',url=text.url(file_name),book_title=book_name)
 

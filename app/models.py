@@ -92,6 +92,8 @@ class Download(db.Model):
     source_id = db.Column(db.String(128))
     time = db.Column(db.DateTime, default=datetime.now())
     txt_name = db.Column(db.String(128))
+    lock = db.Column(db.Boolean) # 下载锁，1表示锁住，0表示开锁
+    chapter_name = db.Column(db.String(128))
 
     user = db.relationship('User', backref=db.backref('downloaded', lazy='dynamic'))
 

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <h1 style="font-size: large">下载列表</h1>
+    <br>
+    {% for d in lis %}
+        <p>
+            <a href="{{ url_for('book_detail',book_id=d['book_id']) }}">{{ d['book_name'] }}</a>--{{ d['source_name'] }}<br>
+            ·文件名：{{ d['txt_name'] }}&nbsp;&nbsp;·{{ d['txt_size'] }}MB&nbsp;&nbsp;·{{ d['time'] }}<br>
+            ·下载用户：<a href="{{ url_for('user_detail',id=d['user_id']) }}">{{ d['user_name'] }}</a>&nbsp;&nbsp;·{% if d['chapter_name'] %}
+            {{ d['chapter_name'] }}
+        {% else %}
+            {{ d['chapter'] }}&nbsp;章
+        {% endif %}
+            <br>
+        ·<a href="{{ url_for('download_file',file_name=d['txt_name'],book_name=d['book_name']) }}">下载</a>
+        ·<a href="{{ url_for('delete_download_file',id=d['id']) }}">删除</a>
+        </p>
+
+
+        <hr>
+    {% endfor %}
+
+{% endblock %}
