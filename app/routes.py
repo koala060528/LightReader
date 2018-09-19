@@ -361,7 +361,7 @@ def rank():
                            limit=int(limit), next=next_page)
 
 
-@app.route('/api/download', methods=['GET'])
+@app.route('/download', methods=['GET'])
 @login_required
 def download():
     if not current_user.is_authenticated:
