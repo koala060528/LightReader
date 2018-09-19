@@ -53,12 +53,13 @@ class User(UserMixin, db.Model):
 class Subscribe(db.Model):
     __tablename__ = 'subscribe'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id',ondelete='CASCADE', onupdate='CASCADE'))
     book_id = db.Column(db.String(128))
     book_name = db.Column(db.String(128))
     chapter = db.Column(db.String(128))
     source_id = db.Column(db.String(128))
     time = db.Column(db.DateTime, default=datetime.now())
+    chapter_name = db.Column(db.String(128))
 
     user = db.relationship('User', backref=db.backref('subscribing', lazy='dynamic'))
 
@@ -84,7 +85,7 @@ class Subscribe(db.Model):
 class Download(db.Model):
     __tablename__ = 'download'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id',ondelete='CASCADE', onupdate='CASCADE'))
     book_id = db.Column(db.String(128))
     book_name = db.Column(db.String(128))
     chapter = db.Column(db.Integer)

@@ -73,6 +73,16 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', form=form, title='注册')
 
+@app.route('/delete_user/<id>', methods=['GET'])
+def delete_user(id):
+    if not current_user.is_admin:
+        return render_template('permission_denied.html', message=None, title='权限不足')
+    u=User.query.get(id)
+    db.session.delete(u)
+    db.session.commit()
+    flash('删除用户成功！')
+    return redirect(url_for('user_list'))
+
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
@@ -219,6 +229,7 @@ def read():
         s = Subscribe.query.filter(Subscribe.book_id == book_id, Subscribe.user == current_user).first()
         if s:
             s.chapter = index
+            s.chapter_name = title
             s.source_id = source_id
             s.time = datetime.utcnow()
             db.session.commit()
@@ -365,10 +376,10 @@ def rank():
 @login_required
 def download():
     if not current_user.is_authenticated:
-        return render_template('permission_denied.html', title='权限不足')
+        return render_template('permission_denied.html', title='权限不足', message='下载功能并非向所有人开放，请联系管理员索取权限')
     else:
         if not current_user.can_download:
-            return render_template('permission_denied.html', title='权限不足')
+            return render_template('permission_denied.html', title='权限不足', message='下载功能并非向所有人开放，请联系管理员索取权限')
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
 
@@ -406,7 +417,7 @@ def download():
     db.session.add(d)
     db.session.commit()
 
-    with open(os.path.join(path,fileName), 'a', encoding='gbk') as f:
+    with open(os.path.join(path, fileName), 'a', encoding='gbk') as f:
         if new:
             f.writelines(
                 ['    ', book_title, '\n', '\n', '    ', author, '\n', '\n', '    ', longIntro, '\n', '\n'])
@@ -421,3 +432,70 @@ def download():
                     pass
     return render_template('view_documents.html', title=book_title + '--下载', url=text.url(fileName),
                            book_title=book_title + '.txt')
+
+
+@app.route('/background', methods=['GET'])
+@login_required
+def background():
+    if not current_user.is_admin:
+        return render_template('permission_denied.html', message=None, title='权限不足')
+    return render_template('background.html',title='后台管理')
+
+
+@app.route('/user_list', methods=['GET'])
+@login_required
+def user_list():
+    if not current_user.is_admin:
+        return render_template('permission_denied.html', message=None, title='权限不足')
+    users = User.query.all()
+    lis = list()
+    for u in users:
+        lis.append((u.id, u.name, u.is_admin, utc2local(u.last_seen) if u.last_seen else None))
+
+    return render_template('user_list.html', title='用户列表', lis=lis)
+
+
+@app.route('/user_detail/<id>', methods=['GET'])
+@login_required
+def user_detail(id):
+    if not current_user.is_admin:
+        return render_template('permission_denied.html', message=None, title='权限不足')
+    u = User.query.get(id)
+    dic = {
+        'id': u.id,
+        'name': u.name,
+        'is_admin': u.is_admin,
+        'can_download': u.can_download,
+        'last_seen': utc2local(u.last_seen) if u.last_seen else None,
+        'user_agent': u.user_agent,
+        'user_ip': u.user_ip,
+    }
+    lis = list()
+    for s in u.subscribing:
+        lis.append({
+            'book_id': s.book_id,
+            'book_name': s.book_name,
+            'source_id': s.source_id,
+            'chapter': s.chapter,
+            'chapter_name':s.chapter_name,
+            'time': utc2local(s.time) if s.time else None
+        })
+    dic['subscribing'] = lis
+    return render_template('user_detail.html', dic=dic, title='用户详情--%s' % u.name)
+
+
+@app.route('/change_download_permission/<id>')
+@login_required
+def change_download_permission(id):
+    if not current_user.is_admin:
+        return render_template('permission_denied.html', message=None, title='权限不足')
+    u = User.query.get(id)
+    if u.can_download:
+        u.can_download = False
+    else:
+        u.can_download = True
+    db.session.add(u)
+    db.session.commit()
+    flash('修改下载权限成功！')
+    return redirect(url_for('user_detail', id=id))
+

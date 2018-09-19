@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    <p>
+        <b>
+            用户名：{{ dic['name'] }}
+        </b>
+    </p>
+    <br>
+    <p>
+        序号：{{ dic['id'] }}
+    </p>
+    <br>
+    <p>
+        {% if dic['is_admin'] %}
+            管理员：是
+        {% else %}
+            管理员：否
+        {% endif %}
+    </p>
+    <br>
+    <p>
+        {% if dic['can_download'] %}
+            能否下载：是
+        {% else %}
+            能否下载：否
+        {% endif %}
+    &nbsp;&nbsp;
+        <a href="{{ url_for('change_download_permission',id=dic['id']) }}">更改</a>
+    </p>
+    <br>
+    <p>
+        最近活动：{{ dic['last_seen'] }}
+    </p>
+    <br>
+    <p>
+        UA：{{ dic['user_agent'] }}
+    </p>
+    <br>
+    <p>
+        IP：{{ dic['user_ip'] }}
+    </p>
+    <br>
+    <p>
+        <a href="{{ url_for('delete_user',id=dic['id']) }}">删除用户</a>
+    </p>
+    <br>
+    <b>
+        订阅列表：
+    </b>
+    <br>
+    <hr>
+    {% for s in dic['subscribing'] %}
+        <a href="{{ url_for('book_detail',book_id=s['book_id']) }}">{{ s['book_name'] }}</a><br>
+        ·{% if s['chapter_name'] %}
+        {{ s['chapter_name'] }}
+        {% else %}
+        {{ s['chapter'] }}
+        {% endif %}
+        &nbsp;&nbsp; ·{{ s['time'] }}<br>
+        <hr>
+
+    {% endfor %}
+
+
+{% endblock %}

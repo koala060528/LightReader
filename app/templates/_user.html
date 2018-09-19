@@ -1,0 +1,16 @@
+<tr>
+    <td width="">
+        <a href="{{ url_for('user_detail', id=u[0]) }}">
+            {{ u[1] }}
+        </a>
+        <br>
+        {% if u[2] %}
+            ★
+        {% else %}
+            ☆
+        {% endif %}
+        &nbsp;&nbsp;
+        上次登录：{{ u[3] }}
+    </td>
+</tr>
+<hr>

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    {% if form %}
+        {{ wtf.quick_form(form) }}
+    {% endif %}
+    {% if lis %}
+        {% for u in lis %}
+            {% include '_user.html' %}
+
+        {% endfor %}
+    {% endif %}
+
+{% endblock %}

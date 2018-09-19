@@ -32,6 +32,11 @@
                         <li><a href="{{ url_for('logout') }}">登出</a></li>
                     {% endif %}
                 </ul>
+            <ul class="nav navbar-nav navbar-right">
+                {% if current_user.is_admin %}
+                    <li><a href="{{ url_for('background') }}">后台</a></li>
+                {% endif %}
+            </ul>
             </div>
         </div>
     </nav>
