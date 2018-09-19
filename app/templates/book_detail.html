@@ -39,10 +39,13 @@
                 <a href="{{ url_for('unsubscribe',id=data.get('_id')) }}">取消订阅</a>
             {% else %}
                 <a href="{{ url_for('subscribe',id=data.get('_id')) }}">订阅</a>
-            {% endif %}&nbsp;&nbsp;
-
+            {% endif %}
+            &nbsp;&nbsp;
+        {% else %}
+            <a href="{{ url_for('subscribe',id=data.get('_id')) }}">订阅</a>
+            &nbsp;&nbsp;
         {% endif %}
-    <a href="{{ url_for('download',book_id = book_id,source_id = source_id) }}">下载</a>
+        <a href="{{ url_for('download',book_id = book_id,source_id = source_id) }}">下载</a>
     </p>
 
 {% endblock %}

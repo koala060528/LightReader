@@ -4,10 +4,19 @@
 {% block app_content %}
     {% if not current_user.is_anonymous %}
         <p>欢迎，{{ current_user.name }}</p>
-        <hr>
-        <h1 style="font-size: large">订阅</h1>
+        {% else %}
+        <p>欢迎，旅行者</p>
+    {% endif %}
+
+    <h1 style="font-size: large">订阅</h1>
+    <hr>
+    {% if not current_user.is_anonymous %}
+
+
+
         {#        <p style="font-weight: bold">订阅列表</p>#}
-        {% for book in data.get('subscribe') %}
+        {% if data.get('subscribe') %}
+            {% for book in data.get('subscribe') %}
             <table>
                 <tr>
                     <a href="{{ url_for('book_detail',book_id=book['_id']) }}">{{ book['title'] }}</a>
@@ -19,11 +28,19 @@
             </table>
 
         {% endfor %}
-        <hr>
-    {% endif %}
+            {% else %}
+            <p>你的订阅列表是空的</p>
+            {% endif %}
 
+        {% else %}
+
+        <p>
+            <a href="{{ url_for('login') }}"> 登录</a>以查看你的订阅列表
+        </p>
+    {% endif %}
+    <hr>
     {% if form %}
-        <h2 style="font-size: large">搜索</h2>
+        <h2 style="font-size: large">探索</h2>
         {#        {{ wtf.quick_form(form) }}#}
         <form action="" , method="post">
             {{ form.hidden_tag() }}
