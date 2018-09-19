@@ -20,6 +20,7 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime, default=datetime.now())
     user_ip = db.Column(db.String(20))
     user_agent = db.Column(db.String(256))
+    is_admin = db.Column(db.Boolean) # 表示用户是否是管理员，0表示不是，1表示是
 
     # subscribing = db.relationship('Book',
     #                              secondary=subscribe,
