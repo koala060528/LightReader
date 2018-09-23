@@ -323,13 +323,18 @@ def book_detail():
                 data['readingChapter'] = chap[int(c)]['title']
         else:
             dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
-            for i in dd:
-                if i['source'] == 'my176':
-                    source_id = i['_id']
-                    break
+            for i in range(len(dd))[::-1]:
+                if dd[i]['source'] !='zhuishuvip':
+                    source_id = dd[i]['_id']
+                    if dd[i]['source'] =='my176':
+                        break
     else:
-        dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book={0}'.format(book_id))
-        source_id = dd[0]['_id']
+        dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
+        for i in range(len(dd))[::-1]:
+            if dd[i]['source'] != 'zhuishuvip':
+                source_id = dd[i]['_id']
+                if dd[i]['source'] == 'my176':
+                    break
 
     return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id, book_id=book_id,
                            lastIndex=lastIndex,
