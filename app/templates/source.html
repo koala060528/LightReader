@@ -8,7 +8,7 @@
             </th>
             <br>
             <th>
-            最新章节：{{ s.get('lastChapter') }} -- {{ s.get('updated') }}
+            最新章节：{{ s.get('lastChapter') }} -- 最近更新：{{ moment(s.get('updated')).fromNow() }}
             </th>
             <hr>
         {% endfor %}

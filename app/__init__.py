@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap
 from config import Config
 from flask_uploads import UploadSet, configure_uploads, TEXT
+from flask_moment import Moment
 
 
 app = Flask(__name__)
@@ -16,6 +17,7 @@ bootstrap = Bootstrap(app)
 login.login_view = 'login'
 text = UploadSet("downloads",TEXT)
 configure_uploads(app,text)
+moment = Moment(app)
 
 from app import models, routes
 

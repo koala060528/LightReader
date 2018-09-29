@@ -30,7 +30,7 @@
     </p>
     <br>
     <p>
-        最近活动：{{ dic['last_seen'] }}
+        最近活动：{{ moment(dic['last_seen'] ).fromNow() }}
     </p>
     <br>
     <p>
@@ -57,7 +57,7 @@
         {% else %}
         {{ s['chapter'] }}&nbsp;章
         {% endif %}
-        &nbsp;&nbsp; ·{{ s['time'] }}<br>
+        &nbsp;&nbsp; ·{{ moment(s['time'] ).fromNow() }}<br>
         <hr>
 
     {% endfor %}

@@ -1,4 +1,4 @@
-from app import app, db, text
+from app import app, db, text, moment
 from app.models import User, Subscribe, Download
 import json, os
 from flask import render_template, flash, redirect, url_for, request, jsonify
@@ -295,9 +295,12 @@ def local2utc(local_st):
 def book_detail():
     book_id = request.args.get('book_id')
     data = get_response('http://api.zhuishushenqi.com/book/' + book_id)
-    t = data['updated']  # = datetime(data['updated']).strftime('%Y-%m-%d %H:%M:%S')
-    t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
-    data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
+    # t = data['updated']  # = datetime(data['updated']).strftime('%Y-%m-%d %H:%M:%S')
+    # t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
+    # data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
+    UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+    t = datetime.strptime(data['updated'],UTC_FORMAT)
+    data['updated'] = t
     lis = data.get('longIntro').split('\n')
     data['longIntro'] = lis
     lastIndex = None
@@ -324,9 +327,9 @@ def book_detail():
         else:
             dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
             for i in range(len(dd))[::-1]:
-                if dd[i]['source'] !='zhuishuvip':
+                if dd[i]['source'] != 'zhuishuvip':
                     source_id = dd[i]['_id']
-                    if dd[i]['source'] =='my176':
+                    if dd[i]['source'] == 'my176':
                         break
     else:
         dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
@@ -348,9 +351,12 @@ def source(book_id):
     page = request.args.get('page')
     data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
     for s in data:
-        t = s['updated']
-        t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
-        s['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
+        UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+        t = datetime.strptime(s['updated'], UTC_FORMAT)
+        s['updated'] = t
+        # t = s['updated']
+        # t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
+        # s['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
     if not page:
         page = 0
     return render_template('source.html', data=data[1:], title='换源', page=page, book_id=book_id)
@@ -468,7 +474,7 @@ def user_list():
     users = User.query.all()
     lis = list()
     for u in users:
-        lis.append((u.id, u.name, u.is_admin, utc2local(u.last_seen) if u.last_seen else None))
+        lis.append((u.id, u.name, u.is_admin, u.last_seen if u.last_seen else None))
 
     return render_template('user_list.html', title='用户列表', lis=lis)
 
@@ -484,7 +490,7 @@ def user_detail(id):
         'name': u.name,
         'is_admin': u.is_admin,
         'can_download': u.can_download,
-        'last_seen': utc2local(u.last_seen) if u.last_seen else None,
+        'last_seen': u.last_seen if u.last_seen else None,
         'user_agent': u.user_agent,
         'user_ip': u.user_ip,
     }
@@ -496,7 +502,7 @@ def user_detail(id):
             'source_id': s.source_id,
             'chapter': s.chapter,
             'chapter_name': s.chapter_name,
-            'time': utc2local(s.time) if s.time else None
+            'time': s.time if s.time else None
         })
     dic['subscribing'] = lis
     return render_template('user_detail.html', dic=dic, title='用户详情--%s' % u.name)
@@ -529,10 +535,10 @@ def download_list():
     for d in ds:
         data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(d.source_id))
         source_name = data.get('name')
-        if os.path.exists(os.path.join(path,d.txt_name)):
-            txt_size = os.path.getsize(os.path.join(path,d.txt_name))
-            txt_size = txt_size/float(1024*1024)
-            txt_size = round(txt_size,2)
+        if os.path.exists(os.path.join(path, d.txt_name)):
+            txt_size = os.path.getsize(os.path.join(path, d.txt_name))
+            txt_size = txt_size / float(1024 * 1024)
+            txt_size = round(txt_size, 2)
         else:
             txt_size = '文件缺失'
         lis.append({
@@ -543,16 +549,16 @@ def download_list():
             'book_id': d.book_id,
             'chapter': d.chapter,
             'source_id': d.source_id,
-            'source_name':source_name,
-            'time': utc2local(d.time) if d.time else None,
+            'source_name': source_name,
+            'time': d.time if d.time else None,
             'txt_name': d.txt_name,
             'chapter_name': d.chapter_name,
-            'txt_size':txt_size
+            'txt_size': txt_size
         })
     return render_template('download_list.html', lis=lis, title='下载列表')
 
 
-@app.route('/delete_download_file/<id>',methods=['GET'])
+@app.route('/delete_download_file/<id>', methods=['GET'])
 @login_required
 def delete_download_file(id):
     if not current_user.is_admin:
@@ -567,6 +573,7 @@ def delete_download_file(id):
     flash('删除下载项目成功！')
     return redirect(url_for('download_list'))
 
+
 @app.route('/download_file/', methods=['GET'])
 @login_required
 def download_file():
@@ -574,5 +581,4 @@ def download_file():
     book_name = request.args.get('book_name')
     path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
     if os.path.exists(os.path.join(path, file_name)):
-        return render_template('view_documents.html',title='下载文件',url=text.url(file_name),book_title=book_name)
-
+        return render_template('view_documents.html', title='下载文件', url=text.url(file_name), book_title=book_name)
