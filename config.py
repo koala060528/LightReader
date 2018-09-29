@@ -14,7 +14,7 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # 语言设置
-    LANGUAGES = ['en-US', 'zh-CH']
+    LANGUAGES = ['zh-CN']
 
     # 每页显示的blog数量
     CHAPTER_PER_PAGE = 50

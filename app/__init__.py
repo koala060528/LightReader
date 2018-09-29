@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -6,6 +6,7 @@ from flask_bootstrap import Bootstrap
 from config import Config
 from flask_uploads import UploadSet, configure_uploads, TEXT
 from flask_moment import Moment
+from flask_babel import Babel
 
 
 app = Flask(__name__)
@@ -18,8 +19,12 @@ login.login_view = 'login'
 text = UploadSet("downloads",TEXT)
 configure_uploads(app,text)
 moment = Moment(app)
+babel = Babel(app)
 
 from app import models, routes
 
 import create_db
 
+@babel.localeselector
+def get_locale():
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
