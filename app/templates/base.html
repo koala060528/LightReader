@@ -50,6 +50,24 @@
 
 {% block content %}
     <div class="container">
+        {% if current_user.is_authenticated %}
+            {% with tasks = current_user.get_tasks_in_progress() %}
+                {% if tasks %}
+                    {% for task in tasks %}
+                        <div class="alert-success" role="alert">
+                            {{ task.description }}
+                            <span id="{{ task.id }}-progress">{{ task.get_progress() }}</span>
+                            <br>
+                        </div>
+
+                    {% endfor %}
+
+                {% endif %}
+            {% endwith %}
+
+        {% endif %}
+        <br>
+
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}

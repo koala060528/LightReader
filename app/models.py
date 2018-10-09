@@ -1,4 +1,5 @@
 from app import db, login
+import app
 from flask_login import UserMixin, current_user
 from datetime import datetime
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -55,9 +56,9 @@ class User(UserMixin, db.Model):
 
     def launch_task(self, name, description, source_id, book_id):
         rq_job = current_app.task_queue.enqueue('app.tasks.' + name, current_user.id ,source_id, book_id)
-        print(current_user.name)
         task = Task(id=rq_job.get_id(), name=name, description=description, user=self)
         db.session.add(task)
+        db.session.commit()
         return task
 
     def get_tasks_in_progress(self):
@@ -121,17 +122,19 @@ class Download(db.Model):
 class Task(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True)
-    description = db.Column(db.Integer, db.ForeignKey('user.id'))
+    description = db.Column(db.String(128))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     complete = db.Column(db.Boolean, default=False)
 
     def get_rq_job(self):
         try:
-            rq_job = rq.job.Job.fetch(self.id, connection=current_app.redis)
-        except(redis.exceptions.RedisError, rq.exceptions.NoSuchJobError):
+            rq_job = rq.job.Job.fetch(self.id, connection=app.redis)
+        except(redis.exceptions.RedisError, rq.exceptions.NoSuchJobError) as e:
+            print(e)
             return None
         return rq_job
 
-    def get_process(self):
+    def get_progress(self):
         job = self.get_rq_job()
         return job.meta.get('progress', 0) if job is not None else 100
 

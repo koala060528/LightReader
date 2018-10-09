@@ -449,7 +449,7 @@ def download():
     if current_user.get_task_in_progress('download'):
         flash('下载任务已经存在于您的任务列表当中！')
     else:
-        current_user.launch_task('download', '下载进度...', source_id, book_id)
+        task = current_user.launch_task('download', '下载进度：', source_id, book_id)
         db.session.commit()
         flash('下载任务已经提交，请稍后回来下载')
     return redirect(url_for('book_detail', book_id=book_id))
