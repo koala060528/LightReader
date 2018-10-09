@@ -13,6 +13,9 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://%s:%s@%s:%s/%s' % (D_USER, D_PASSWORD, D_HOST, D_PORT, D_DATABASE)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # redis设置
+    REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
+
     # 语言设置
     LANGUAGES = ['zh-CN']
 

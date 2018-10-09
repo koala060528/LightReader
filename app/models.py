@@ -1,7 +1,9 @@
 from app import db, login
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from datetime import datetime
 from werkzeug.security import check_password_hash, generate_password_hash
+import rq, redis
+from flask import current_app
 
 
 # subscribe = db.Table('subscribe',
@@ -20,13 +22,15 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime, default=datetime.now())
     user_ip = db.Column(db.String(20))
     user_agent = db.Column(db.String(256))
-    is_admin = db.Column(db.Boolean) # 表示用户是否是管理员，0表示不是，1表示是
+    is_admin = db.Column(db.Boolean)  # 表示用户是否是管理员，0表示不是，1表示是
 
     # subscribing = db.relationship('Book',
     #                              secondary=subscribe,
     #                              primaryjoin=(subscribe.c.user_id==id),
     #                              backref=db.backref('subscribe',lazy='dynamic'),
     #                              lazy='dynamic')
+
+    tasks = db.relationship('Task', backref='user', lazy='dynamic')
 
     def __repr__(self):
         return '<User {%s}>' % self.name
@@ -49,11 +53,24 @@ class User(UserMixin, db.Model):
     #     if self.is_subscribing(book):
     #         self.subscribing.remove(book)
 
+    def launch_task(self, name, description, source_id, book_id):
+        rq_job = current_app.task_queue.enqueue('app.tasks.' + name, current_user.id ,source_id, book_id)
+        print(current_user.name)
+        task = Task(id=rq_job.get_id(), name=name, description=description, user=self)
+        db.session.add(task)
+        return task
+
+    def get_tasks_in_progress(self):
+        return Task.query.filter_by(user=self, complete=False).all()
+
+    def get_task_in_progress(self, name):
+        return Task.query.filter_by(name=name, user=self, complete=False).first()
+
 
 class Subscribe(db.Model):
     __tablename__ = 'subscribe'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id',ondelete='CASCADE', onupdate='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE', onupdate='CASCADE'))
     book_id = db.Column(db.String(128))
     book_name = db.Column(db.String(128))
     chapter = db.Column(db.String(128))
@@ -85,20 +102,38 @@ class Subscribe(db.Model):
 class Download(db.Model):
     __tablename__ = 'download'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id',ondelete='CASCADE', onupdate='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE', onupdate='CASCADE'))
     book_id = db.Column(db.String(128))
     book_name = db.Column(db.String(128))
     chapter = db.Column(db.Integer)
     source_id = db.Column(db.String(128))
     time = db.Column(db.DateTime, default=datetime.now())
     txt_name = db.Column(db.String(128))
-    lock = db.Column(db.Boolean) # 下载锁，1表示锁住，0表示开锁
+    lock = db.Column(db.Boolean)  # 下载锁，1表示锁住，0表示开锁
     chapter_name = db.Column(db.String(128))
 
     user = db.relationship('User', backref=db.backref('downloaded', lazy='dynamic'))
 
     def __repr__(self):
         return '<User>{%s} download <book>%s' % (self.user.name, self.book_name)
+
+
+class Task(db.Model):
+    id = db.Column(db.String(36), primary_key=True)
+    name = db.Column(db.String(128), index=True)
+    description = db.Column(db.Integer, db.ForeignKey('user.id'))
+    complete = db.Column(db.Boolean, default=False)
+
+    def get_rq_job(self):
+        try:
+            rq_job = rq.job.Job.fetch(self.id, connection=current_app.redis)
+        except(redis.exceptions.RedisError, rq.exceptions.NoSuchJobError):
+            return None
+        return rq_job
+
+    def get_process(self):
+        job = self.get_rq_job()
+        return job.meta.get('progress', 0) if job is not None else 100
 
 
 @login.user_loader

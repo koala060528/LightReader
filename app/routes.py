@@ -1,6 +1,6 @@
 from app import app, db, text, moment
 from app.models import User, Subscribe, Download
-import json, os
+import json, os, re
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from app.forms import LoginForm, RegistrationForm, SearchForm, JumpForm
 from flask_login import current_user, login_required, login_user, logout_user
@@ -208,6 +208,10 @@ def read():
     chap = data.get('chapters')
     title = chap[index]['title']
     url = chap[index]['link']
+    # 为各个源添加特殊处理
+    if data['source'] == 'biquge':
+        url = reg_biquge(data['link'], url)
+
     # chapter_url = Config.CHAPTER_DETAIL.format(url.replace('/', '%2F').replace('?', '%3F'))
     # data = get_response(chapter_url)
     # if not data:
@@ -238,6 +242,25 @@ def read():
     return render_template('read.html', body=li, title=title, next=(index + 1) if len(chap) - index > 1 else None,
                            pre=(index - 1) if index > 0 else None,
                            book_id=book_id, page=page, source_id=source_id)
+
+
+def reg_biquge(book_url, chapter_url):
+    reg_normal = r'(http:\/\/www.biquge.la\/book\/[0-9]*\/[0-9]*.html)'
+    reg_error = r'(http:\/\/www.biquge.la[0-9]*.html)'
+    reg_chapter = r'([0-9]*.html)'
+    reg = re.compile(reg_normal)
+    lis = re.findall(reg, chapter_url)
+    if lis:
+        return chapter_url
+    else:
+        reg = re.compile(reg_error)
+        lis = re.findall(reg, chapter_url)
+        if lis:
+            reg = re.compile(reg_chapter)
+            lis = re.findall(reg, chapter_url)
+            if lis:
+                return book_url + lis[0]
+    return chapter_url
 
 
 def get_text(url):
@@ -298,8 +321,9 @@ def book_detail():
     # t = data['updated']  # = datetime(data['updated']).strftime('%Y-%m-%d %H:%M:%S')
     # t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
     # data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
+    source_id = None
     UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
-    t = datetime.strptime(data['updated'],UTC_FORMAT)
+    t = datetime.strptime(data['updated'], UTC_FORMAT)
     data['updated'] = t
     lis = data.get('longIntro').split('\n')
     data['longIntro'] = lis
@@ -338,12 +362,15 @@ def book_detail():
                 source_id = dd[i]['_id']
                 if dd[i]['source'] == 'my176':
                     break
-
-    return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id, book_id=book_id,
-                           lastIndex=lastIndex,
-                           next=(int(data['reading']) + 1) if data.get(
-                               'reading') is not None and lastIndex is not None and lastIndex > int(
-                               data['reading']) else None)
+    if not source_id:
+        return render_template('source_not_found.html', title='暂无资源', message='抱歉，这本书暂无有效资源')
+    else:
+        return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id,
+                               book_id=book_id,
+                               lastIndex=lastIndex,
+                               next=(int(data['reading']) + 1) if data.get(
+                                   'reading') is not None and lastIndex is not None and lastIndex > int(
+                                   data['reading']) else None)
 
 
 @app.route('/source/<book_id>', methods=['GET'])
@@ -401,61 +428,77 @@ def download():
         flash('文件正在生成，请稍后再试！')
         return redirect(url_for('book_detail', book_id=book_id))
 
-    # 获取章节信息
-    data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
-    path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
-    if not os.path.exists(path):
-        os.makedirs(path)
+    # from app.tasks import download
+    # download(source_id,book_id)
 
-    # 定义文件名
-    fileName = md5((book_id + source_id).encode("utf8")).hexdigest()[:10] + '.txt'
-    # fileName = os.path.join(path, book_title + '.txt')
-    # if os.path.exists(fileName):
-    #     os.remove(fileName)
-
-    chapter_list = data.get('chapters')
-    if d:
-        # 截取需要下载的章节列表
-        new = False
-        download_list = chapter_list[d.chapter + 1:]
-        book_title = d.book_name
-        d.chapter = len(chapter_list) - 1
-        d.time = datetime.utcnow()
-        d.lock = True  # 给下载加锁
-        d.chapter_name = chapter_list[len(chapter_list) - 1].get('title')
+    if current_user.get_task_in_progress('download'):
+        flash('下载任务已经存在于您的任务列表当中！')
     else:
-        new = True
-        # 获取书籍简介
-        data = get_response('http://api.zhuishushenqi.com/book/' + book_id)
-        book_title = data.get('title')
-        author = data.get('author')
-        longIntro = data.get('longIntro')
-        download_list = chapter_list
-        d = Download(user=current_user, book_id=book_id, source_id=source_id, chapter=len(chapter_list) - 1,
-                     book_name=book_title, time=datetime.utcnow(), txt_name=fileName, lock=True,
-                     chapter_name=chapter_list[-1].get('title'))
+        current_user.launch_task('download', '下载进度...', source_id, book_id)
+        db.session.commit()
+        flash('下载任务已经提交，请稍后回来下载')
+    return redirect(url_for('book_detail', book_id=book_id))
 
-    db.session.add(d)
-    db.session.commit()
-
-    with open(os.path.join(path, fileName), 'a', encoding='gbk') as f:
-        if new:
-            f.writelines(
-                ['    ', book_title, '\n', '\n', '    ', author, '\n', '\n', '    ', longIntro, '\n', '\n'])
-        for chapter in download_list:
-            title = chapter.get('title')
-            li = get_text(chapter.get('link'))
-            f.writelines(['\n', '    ', title, '\n', '\n'])
-            for sentence in li:
-                try:
-                    f.writelines(['    ', sentence, '\n', '\n'])
-                except:
-                    pass
-    d.lock = False  # 给下载解锁
-    db.session.add(d)
-    db.session.commit()
-    return render_template('view_documents.html', title=book_title + '--下载', url=text.url(fileName),
-                           book_title=book_title)
+    # # 获取章节信息
+    # data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
+    # path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
+    # if not os.path.exists(path):
+    #     os.makedirs(path)
+    #
+    # # 定义文件名
+    # fileName = md5((book_id + source_id).encode("utf8")).hexdigest()[:10] + '.txt'
+    # # fileName = os.path.join(path, book_title + '.txt')
+    # # if os.path.exists(fileName):
+    # #     os.remove(fileName)
+    #
+    # chapter_list = data.get('chapters')
+    # if d:
+    #     # 截取需要下载的章节列表
+    #     new = False
+    #     download_list = chapter_list[d.chapter + 1:]
+    #     book_title = d.book_name
+    #     d.chapter = len(chapter_list) - 1
+    #     d.time = datetime.utcnow()
+    #     d.lock = True  # 给下载加锁
+    #     d.chapter_name = chapter_list[len(chapter_list) - 1].get('title')
+    # else:
+    #     new = True
+    #     # 获取书籍简介
+    #     data1 = get_response('http://api.zhuishushenqi.com/book/' + book_id)
+    #     book_title = data1.get('title')
+    #     author = data1.get('author')
+    #     longIntro = data1.get('longIntro')
+    #     download_list = chapter_list
+    #     d = Download(user=current_user, book_id=book_id, source_id=source_id, chapter=len(chapter_list) - 1,
+    #                  book_name=book_title, time=datetime.utcnow(), txt_name=fileName, lock=True,
+    #                  chapter_name=chapter_list[-1].get('title'))
+    #
+    # db.session.add(d)
+    # db.session.commit()
+    #
+    # with open(os.path.join(path, fileName), 'a', encoding='gbk') as f:
+    #     if new:
+    #         f.writelines(
+    #             ['    ', book_title, '\n', '\n', '    ', author, '\n', '\n', '    ', longIntro, '\n', '\n'])
+    #     for chapter in download_list:
+    #         title = chapter.get('title')
+    #         url = chapter.get('link')
+    #         # 为各个源添加特殊处理
+    #         if data['source'] == 'biquge':
+    #             url = reg_biquge(data['link'], url)
+    #
+    #         li = get_text(url)
+    #         f.writelines(['\n', '    ', title, '\n', '\n'])
+    #         for sentence in li:
+    #             try:
+    #                 f.writelines(['    ', sentence, '\n', '\n'])
+    #             except:
+    #                 pass
+    # d.lock = False  # 给下载解锁
+    # db.session.add(d)
+    # db.session.commit()
+    # return render_template('view_documents.html', title=book_title + '--下载', url=text.url(fileName),
+    #                        book_title=book_title)
 
 
 @app.route('/background', methods=['GET'])
