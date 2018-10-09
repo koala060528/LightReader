@@ -424,13 +424,28 @@ def download():
 
     d = Download.query.filter_by(book_id=book_id, source_id=source_id).first()
     # 检测资源锁
-    if d and d.lock:
-        flash('文件正在生成，请稍后再试！')
-        return redirect(url_for('book_detail', book_id=book_id))
+    if d:
+        if d.lock:
+            # 检测文件锁
+            flash('文件正在生成，请稍后再试！')
+            return redirect(url_for('book_detail', book_id=book_id))
+        else:
+            # 检测服务器是否已经下载了文件的最新版本
+            data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
+            chapter_list = data.get('chapters')
+            download_list = chapter_list[d.chapter + 1:]
+
+            if len(download_list) == 0:
+                # 如果不存在新章节，返回文件链接
+                book_title = d.book_name
+                fileName = md5((book_id + source_id).encode("utf8")).hexdigest()[:10] + '.txt'
+                return render_template('view_documents.html', title=book_title + '--下载', url=text.url(fileName),
+                                       book_title=book_title)
 
     # from app.tasks import download
     # download(source_id,book_id)
 
+    # 进入后台任务处理流程
     if current_user.get_task_in_progress('download'):
         flash('下载任务已经存在于您的任务列表当中！')
     else:

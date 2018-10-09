@@ -33,7 +33,6 @@ def download(user_id, source_id, book_id):
 
         # 获取章节信息
         data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
-        print('data query ok')
         path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
         if not os.path.exists(path):
             os.makedirs(path)
@@ -66,7 +65,6 @@ def download(user_id, source_id, book_id):
             d = Download(user=u, book_id=book_id, source_id=source_id, chapter=len(chapter_list) - 1,
                          book_name=book_title, time=datetime.utcnow(), txt_name=fileName, lock=True,
                          chapter_name=chapter_list[-1].get('title'))
-        print(d)
         db.session.add(d)
         db.session.commit()
 
