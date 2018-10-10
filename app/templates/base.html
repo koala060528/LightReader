@@ -1,10 +1,5 @@
 {% extends 'bootstrap/base.html' %}
 
-{% block scripts %}
-    {{ super() }}
-    {{ moment.include_moment() }}
-    {{ moment.lang('zh-CN') }}
-{% endblock %}
 
 {% block title %}
     {% if title %}
@@ -55,8 +50,8 @@
                 {% if tasks %}
                     {% for task in tasks %}
                         <div class="alert-success" role="alert">
-                            {{ task.description }}
-                            <span id="{{ task.id }}-progress">{{ task.get_progress() }}</span>
+                            正在生成({{ task.description }}):
+                            <span id="{{ task.id }}-progress">{{ task.get_progress() }}%</span>
                             <br>
                         </div>
 
@@ -79,4 +74,56 @@
         {# application content needs to be provided in the app_content block #}
         {% block app_content %}{% endblock %}
     </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+    {{ moment.lang('zh-CN') }}
+
+    <script>
+        function set_task_progress(task_id, progress) {
+            $('#' + task_id + '-progress').text(progress);
+        }
+
+        var ids = new Array()
+        {% if current_user.is_authenticated %}
+            {% with tasks = current_user.get_tasks_in_progress() %}
+                {% if tasks %}
+                    {% for task in tasks %}
+                        ids.push("{{ task.id }}")
+
+                    {% endfor %}
+
+                {% endif %}
+            {% endwith %}
+            $(function () {
+                var since = 0;
+                setInterval(function () {
+                    $.ajax({
+                        url: '{{ url_for('get_task_progress') }}',
+                        type: 'POST',
+                        async: true,
+                        data: JSON.stringify(ids),
+                        dataType: 'application/json',
+                        crossDomain: true,
+                        complete: function (data) {
+                            var text = JSON.parse(data.responseText);
+                            for (var i = 0; i < text.length; i++) {
+                                if (text[i]['progress'] != null && text[i]['progress'] < 100) {
+                                    set_task_progress(text[i]['id'],
+                                        text[i]['progress'] + "%");
+                                } else {
+                                    set_task_progress(text[i]['id'],
+                                        "完成!");
+                                }
+
+                                break;
+                            }
+                        }
+                    })
+                }, 5000);
+            });
+        {% endif %}
+    </script>
 {% endblock %}

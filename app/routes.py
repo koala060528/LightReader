@@ -1,5 +1,5 @@
 from app import app, db, text, moment
-from app.models import User, Subscribe, Download
+from app.models import User, Subscribe, Download, Task
 import json, os, re
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from app.forms import LoginForm, RegistrationForm, SearchForm, JumpForm
@@ -421,8 +421,11 @@ def download():
             return render_template('permission_denied.html', title='权限不足', message='下载功能并非向所有人开放，请联系管理员索取权限')
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
+    data = get_response('http://api.zhuishushenqi.com/book/' + book_id)
+    book_name = data.get('title')
 
     d = Download.query.filter_by(book_id=book_id, source_id=source_id).first()
+
     # 检测资源锁
     if d:
         if d.lock:
@@ -449,7 +452,7 @@ def download():
     if current_user.get_task_in_progress('download'):
         flash('下载任务已经存在于您的任务列表当中！')
     else:
-        task = current_user.launch_task('download', '下载进度：', source_id, book_id)
+        task = current_user.launch_task('download', book_name, source_id, book_id)
         db.session.commit()
         flash('下载任务已经提交，请稍后回来下载')
     return redirect(url_for('book_detail', book_id=book_id))
@@ -640,3 +643,17 @@ def download_file():
     path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
     if os.path.exists(os.path.join(path, file_name)):
         return render_template('view_documents.html', title='下载文件', url=text.url(file_name), book_title=book_name)
+
+
+@app.route('/get_task_progress', methods=['POST'])
+@login_required
+def get_task_progress():
+    ids = json.loads(request.get_data())
+    lis = []
+    for id in ids:
+        task = Task.query.filter_by(id=id).first()
+        lis.append({
+            'id': task.id,
+            'progress': task.get_progress()
+        })
+    return jsonify(lis)
