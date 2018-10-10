@@ -13,22 +13,29 @@
     <hr>
     {% if pre is not none %}
         <tr>
-            <a href="{{ url_for('read',index=pre,book_id=book_id,source_id=source_id) }}">上一章</a>
+            <a style="font-size: 150%"
+               href="{{ url_for('read',index=pre,book_id=book_id,source_id=source_id) }}">上一章</a>
         </tr>
+        &nbsp;&nbsp;
     {% endif %}
 
     <tr>
-        <a href="{{ url_for('chapter',book_id=book_id,page=page,source_id=source_id) }}">目录</a>
+        <a style="font-size: 150%" href="{{ url_for('chapter',book_id=book_id,page=page,source_id=source_id) }}">目录</a>
+        &nbsp;&nbsp;
     </tr>
     <tr>
-        <a href="{{ url_for('book_detail',book_id=book_id) }}">详情</a>
+        <a style="font-size: 150%" href="{{ url_for('book_detail',book_id=book_id) }}">详情</a>
+        &nbsp;&nbsp;
     </tr>
     <tr>
-        <a href="{{ url_for('source', book_id=book_id,page=page,source_id=source_id) }}">换源</a>
+        <a style="font-size: 150%" href="{{ url_for('source', book_id=book_id,page=page,source_id=source_id) }}">换源</a>
+        &nbsp;&nbsp;
     </tr>
     {% if next is not none %}
         <tr>
-            <a href="{{ url_for('read',index=next,book_id=book_id,source_id=source_id) }}">下一章</a>
+            <a style="font-size: 150%"
+               href="{{ url_for('read',index=next,book_id=book_id,source_id=source_id) }}">下一章</a>
+            &nbsp;&nbsp;
         </tr>
     {% endif %}
 {% endblock %}
