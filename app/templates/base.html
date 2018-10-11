@@ -99,7 +99,7 @@
             {% endwith %}
             $(function () {
                 var since = 0;
-                setInterval(function () {
+                var interval = setInterval(function () {
                     $.ajax({
                         url: '{{ url_for('get_task_progress') }}',
                         type: 'POST',
@@ -109,6 +109,9 @@
                         crossDomain: true,
                         complete: function (data) {
                             var text = JSON.parse(data.responseText);
+                            if (text.length == 0){
+                                clearInterval(interval)
+                            }
                             for (var i = 0; i < text.length; i++) {
                                 if (text[i]['progress'] != null && text[i]['progress'] < 100) {
                                     set_task_progress(text[i]['id'],
