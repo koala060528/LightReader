@@ -5,5 +5,5 @@
 
 由于后台任务使用了Python-RQ，所以不支持在Windows平台上部署，如果强行部署在Windows平台，将会出现无法下载小说的问题。
 
-在Linux上运行时，请进进虚拟环境之后在终端上运行：
+在Linux上运行时，请进虚拟环境之后在终端上运行：
 rq worker novelreader-tasks
