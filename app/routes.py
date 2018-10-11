@@ -449,12 +449,12 @@ def download():
     # download(source_id,book_id)
 
     # 进入后台任务处理流程
-    if current_user.get_task_in_progress('download'):
-        flash('下载任务已经存在于您的任务列表当中！')
-    else:
-        task = current_user.launch_task('download', book_name, source_id, book_id)
-        db.session.commit()
-        flash('下载任务已经提交，请稍后回来下载')
+    # if current_user.get_task_in_progress('download'):
+    #     flash('下载任务已经存在于您的任务列表当中！')
+    # else:
+    task = current_user.launch_task('download', book_name, source_id, book_id)
+    db.session.commit()
+    flash('下载任务已经提交，请稍后回来下载')
     return redirect(url_for('book_detail', book_id=book_id))
 
     # # 获取章节信息
