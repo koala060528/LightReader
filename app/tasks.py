@@ -68,7 +68,7 @@ def download(user_id, source_id, book_id):
         db.session.add(d)
         db.session.commit()
 
-        with open(os.path.join(path, fileName), 'a', encoding='gbk') as f:
+        with open(os.path.join(path, fileName), 'a', encoding='utf-8') as f:
             _set_task_progress(0)
             i = 0
             if new:
@@ -84,11 +84,7 @@ def download(user_id, source_id, book_id):
                 li = get_text(url)
                 f.writelines(['\n', '    ', title, '\n', '\n'])
                 for sentence in li:
-                    try:
-                        f.writelines(['    ', sentence, '\n', '\n'])
-                    except:
-                        pass
-
+                    f.writelines(['    ', sentence, '\n', '\n'])
                 i += 1
                 _set_task_progress(100 * i // len(download_list))
         d.lock = False  # 给下载解锁
