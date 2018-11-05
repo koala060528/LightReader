@@ -231,7 +231,7 @@ def read():
     #     if l != '' and l != '\t':
     #         li.append(l)
     li = get_content_list(key=key, url=url)
-    if index < len(chap):
+    if index < len(chap) - 1:
         next_key = md5((source_id + str(index + 1)).encode("utf8")).hexdigest()[:10]
         next_url = chap[index + 1]['link']
         # 使用后台任务缓存下一章节
