@@ -239,8 +239,9 @@ def read():
             current_app.task_queue.enqueue('app.tasks.cache', next_key, next_url)
         except:
             print('后台任务未开启！')
-
+    font_size = '150%'
     if current_user.is_authenticated:
+        font_size = current_user.font_size if current_user.font_size is not None else '150%'
         s = Subscribe.query.filter(Subscribe.book_id == book_id, Subscribe.user == current_user).first()
         if s:
             s.chapter = index
@@ -250,8 +251,8 @@ def read():
             db.session.commit()
 
     return render_template('read.html', body=li, title=title, next=(index + 1) if len(chap) - index > 1 else None,
-                           pre=(index - 1) if index > 0 else None,
-                           book_id=book_id, page=page, source_id=source_id)
+                           pre=(index - 1) if index > 0 else None, index=index,
+                           book_id=book_id, page=page, source_id=source_id, font_size=font_size)
 
 
 def reg_biquge(book_url, chapter_url):
@@ -676,3 +677,31 @@ def get_task_progress():
             'progress': task.get_progress()
         })
     return jsonify(lis)
+
+
+@app.route('/read_setting/', methods=['GET', 'POST'])
+@login_required
+def read_setting():
+    if request.method == 'GET':
+        index = request.args.get('index')
+        book_id = request.args.get('book_id=book_id')
+        source_id = request.args.get('source_id')
+        body = ['我们日复一日地生活于世，却对世界几乎一无所知。',
+                '阳光的产生机制使生命得以实现；重力将我们束缚在地球上，不让我们以涡旋轨道被抛到太空；原子构成了我们的身躯，并使之保持稳定。',
+                '对于这些，我们思考的很少。',
+                '我们之中，很少有人会花时间惊讶自然界为何是这个样子：',
+                '宇宙从何而来？',
+                '或者它是否一直在这儿？',
+                '时间会不会有朝一日倒流，并因此导致果先于因？',
+                '人类的认知范围是否终有极限？',
+                '物质的最小组成是什么？',
+                '为什么我们记住的是过去，而不是未来？',
+                '以及，为什么会有宇宙？']
+        next_url = url_for('read', index=index, book_id=book_id, source_id=source_id)
+        return render_template('read_setting.html', title='阅读设置', body=body, next_url=next_url)
+    if request.method == 'POST':
+        data = json.loads(request.get_data())
+        font_size = data.get('font_size')
+        current_user.font_size = font_size
+        db.session.commit()
+        return 1

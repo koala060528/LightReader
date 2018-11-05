@@ -5,7 +5,7 @@
     <br>
     <body>
     {% for p in body %}
-        <p style="font-size: 150%">
+        <p style="font-size: {{ font_size }}">
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ p }}
         </p>
     {% endfor %}
@@ -31,6 +31,15 @@
         <a style="font-size: 150%" href="{{ url_for('source', book_id=book_id,page=page,source_id=source_id) }}">换源</a>
         &nbsp;&nbsp;
     </tr>
+    <tr>
+        <a style="font-size: 150%" href="{{ url_for('read_setting',index=index,book_id=book_id,source_id=source_id) }}">设置</a>
+        &nbsp;&nbsp;
+    </tr>
+    <tr>
+        <a style="font-size: 150%" href="{{ url_for('index') }}">主页</a>
+        &nbsp;&nbsp;
+    </tr>
+
     {% if next is not none %}
         <tr>
             <a style="font-size: 150%"

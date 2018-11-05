@@ -1,6 +1,5 @@
 {% extends 'bootstrap/base.html' %}
 
-
 {% block title %}
     {% if title %}
         {{ title }}
@@ -61,7 +60,6 @@
             {% endwith %}
 
         {% endif %}
-        <br>
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}

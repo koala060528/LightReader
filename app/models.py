@@ -24,6 +24,7 @@ class User(UserMixin, db.Model):
     user_ip = db.Column(db.String(20))
     user_agent = db.Column(db.String(256))
     is_admin = db.Column(db.Boolean)  # 表示用户是否是管理员，0表示不是，1表示是
+    font_size = db.Column(db.String(10))  # 用户设置的字体大小
 
     # subscribing = db.relationship('Book',
     #                              secondary=subscribe,
@@ -55,7 +56,7 @@ class User(UserMixin, db.Model):
     #         self.subscribing.remove(book)
 
     def launch_task(self, name, description, source_id, book_id):
-        rq_job = current_app.task_queue.enqueue('app.tasks.' + name, current_user.id ,source_id, book_id)
+        rq_job = current_app.task_queue.enqueue('app.tasks.' + name, current_user.id, source_id, book_id)
         task = Task(id=rq_job.get_id(), name=name, description=description, user=self)
         db.session.add(task)
         db.session.commit()

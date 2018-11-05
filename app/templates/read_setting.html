@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    <div>
+        <button id="save" onclick="save()">保存</button>
+        <button id="cancel" onclick="cancel()">取消</button>
+    </div>
+
+
+    <h2 style="font-size: large">字体大小：</h2>
+    <div>
+        <button id="button1" type="button" style="color: #2b669a" onclick="change(this)">
+            100%
+        </button>
+        <button id="button2" type="button" onclick="change(this)">
+            125%
+        </button>
+        <button id="button3" type="button" onclick="change(this)">
+            150%
+        </button>
+        <button id="button4" type="button" onclick="change(this)">
+            175%
+        </button>
+        <button id="button5" type="button" onclick="change(this)">
+            200%
+        </button>
+    </div>
+    <hr>
+    <h3 style="font-size: large">预览：</h3>
+    <hr>
+    <body>
+    {% for p in body %}
+        <p style="font-size: 100%">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ p }}
+        </p>
+    {% endfor %}
+    </body>
+
+    <script>
+        var font_size = '100%';
+
+        function change(button) {
+            var buttons = document.getElementsByTagName('button');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].style.color = 'black';
+            }
+            button.style.color = '#2b669a';
+            font_size = button.innerHTML.trim();
+            var p = document.getElementsByTagName('p');
+            for (var j = 0; j < p.length; j++) {
+                p[j].style.fontSize = font_size;
+            }
+        }
+
+        function save() {
+            var data = {};
+            data.font_size = font_size;
+            $.post('/read_setting/', JSON.stringify(data));
+            window.history.back(-1);
+        }
+
+        function cancel() {
+            window.history.back(-1);
+        }
+    </script>
+{% endblock %}
