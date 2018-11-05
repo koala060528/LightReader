@@ -1,12 +1,11 @@
-from app import app, db
+from app import app, db, redis
 from rq import get_current_job
 from app.models import Task, Download, User
-from app.routes import get_response, get_text, reg_biquge
+from app.routes import get_response, get_content_list, reg_biquge, get_content_text
 import os
 from config import Config
 from hashlib import md5
 from datetime import datetime
-from flask_login import current_user
 
 app.app_context().push()
 
@@ -81,7 +80,7 @@ def download(user_id, source_id, book_id):
                 if data['source'] == 'biquge':
                     url = reg_biquge(data['link'], url)
 
-                li = get_text(url)
+                li = get_content_list(key=None, url=url)
                 f.writelines(['\n', '    ', title, '\n', '\n'])
                 for sentence in li:
                     f.writelines(['    ', sentence, '\n', '\n'])
@@ -92,3 +91,9 @@ def download(user_id, source_id, book_id):
         db.session.commit()
     except Exception as e:
         print(e)
+
+
+def cache(key, url):
+    txt = get_content_text(url)
+    # print(txt)
+    redis.set(key, txt, ex=300)

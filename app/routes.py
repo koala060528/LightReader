@@ -1,7 +1,7 @@
-from app import app, db, text, moment
+from app import app, db, text, redis
 from app.models import User, Subscribe, Download, Task
 import json, os, re
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask import render_template, flash, redirect, url_for, request, jsonify, current_app
 from app.forms import LoginForm, RegistrationForm, SearchForm, JumpForm
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
@@ -211,6 +211,8 @@ def read():
     # 为各个源添加特殊处理
     if data['source'] == 'biquge':
         url = reg_biquge(data['link'], url)
+    # 设定redis key
+    key = md5((source_id + str(index)).encode("utf8")).hexdigest()[:10]
 
     # chapter_url = Config.CHAPTER_DETAIL.format(url.replace('/', '%2F').replace('?', '%3F'))
     # data = get_response(chapter_url)
@@ -228,7 +230,15 @@ def read():
     # for l in lis:
     #     if l != '' and l != '\t':
     #         li.append(l)
-    li = get_text(url)
+    li = get_content_list(key=key, url=url)
+    if index < len(chap):
+        next_key = md5((source_id + str(index + 1)).encode("utf8")).hexdigest()[:10]
+        next_url = chap[index + 1]['link']
+        # 使用后台任务缓存下一章节
+        try:
+            current_app.task_queue.enqueue('app.tasks.cache', next_key, next_url)
+        except:
+            print('后台任务未开启！')
 
     if current_user.is_authenticated:
         s = Subscribe.query.filter(Subscribe.book_id == book_id, Subscribe.user == current_user).first()
@@ -263,19 +273,27 @@ def reg_biquge(book_url, chapter_url):
     return chapter_url
 
 
-def get_text(url):
+def get_content_text(url):
     chapter_url = Config.CHAPTER_DETAIL.format(url.replace('/', '%2F').replace('?', '%3F'))
     data = get_response(chapter_url)
     if not data:
-        body = '检测到阅读接口发生故障，请刷新页面或稍后再试'
+        txt = '检测到阅读接口发生故障，请刷新页面或稍后再试'
     else:
         if data['ok']:
-            body = data.get('chapter').get('cpContent')
+            txt = data.get('chapter').get('cpContent')
         else:
-            body = '此来源暂不可用，请换源'
-        if not body:
-            body = data.get('chapter').get('body')
-    lis = body.split('\n')
+            txt = '此来源暂不可用，请换源'
+        if not txt:
+            txt = data.get('chapter').get('body')
+    return txt
+
+
+def get_content_list(url, key=None):
+    if key and redis.exists(key):
+        txt = redis.get(key).decode()
+    else:
+        txt = get_content_text(url)
+    lis = txt.split('\n')
     li = []
     for l in lis:
         if l != '' and l != '\t':
@@ -452,6 +470,7 @@ def download():
     # if current_user.get_task_in_progress('download'):
     #     flash('下载任务已经存在于您的任务列表当中！')
     # else:
+    # 使用用户身份开启任务
     task = current_user.launch_task('download', book_name, source_id, book_id)
     db.session.commit()
     flash('下载任务已经提交，请稍后回来下载')
