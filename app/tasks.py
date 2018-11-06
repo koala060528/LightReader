@@ -96,4 +96,4 @@ def download(user_id, source_id, book_id):
 def cache(key, url):
     txt = get_content_text(url)
     # print(txt)
-    redis.set(key, txt, ex=300)
+    redis.set(key, txt, ex=86400)
