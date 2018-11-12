@@ -347,6 +347,8 @@ def book_detail():
     lis = data.get('longIntro').split('\n')
     data['longIntro'] = lis
     lastIndex = None
+    c = 0  # 用户当前阅读的章节
+    chap = None
     # can_download = False
     if current_user.is_authenticated:
         # can_download = current_user.can_download
@@ -354,19 +356,18 @@ def book_detail():
         if s:
             data['is_subscribe'] = True
             source_id = s.source_id
-            c = s.chapter
-            if not c:
-                c = 0
+            if s.chapter:
+                c = int(s.chapter)
             data['reading'] = c
             dd = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
             chap = dd.get('chapters')
             if chap[-1].get('title') == data.get('lastChapter'):
                 lastIndex = len(chap) - 1  # 用来标记最新章节
             # chapter_title = chap[int(c)]['title']
-            if int(c) + 1 > len(chap):
+            if c + 1 > len(chap):
                 data['readingChapter'] = chap[-1]['title']
             else:
-                data['readingChapter'] = chap[int(c)]['title']
+                data['readingChapter'] = chap[c]['title']
         else:
             dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
             for i in range(len(dd))[::-1]:
@@ -387,9 +388,11 @@ def book_detail():
         return render_template('book_detail.html', data=data, title=data.get('title'), source_id=source_id,
                                book_id=book_id,
                                lastIndex=lastIndex,
-                               next=(int(data['reading']) + 1) if data.get(
-                                   'reading') is not None and lastIndex is not None and lastIndex > int(
-                                   data['reading']) else None)
+                               next=c + 1 if chap and len(chap) > c + 1 else None
+                               # next=(int(data['reading']) + 1) if data.get(
+                               #     'reading') is not None and lastIndex is not None and lastIndex > int(
+                               #     data['reading']) else None
+                               )
 
 
 @app.route('/source/<book_id>', methods=['GET'])
