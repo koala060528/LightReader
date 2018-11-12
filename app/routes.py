@@ -122,7 +122,7 @@ def index():
             lis.append(book)
         return render_template('book_list.html', data=lis, title='搜索结果', form=form)
 
-    return render_template('index.html', data=dic, form=form, title='首页', limit=Config.CHAPTER_PER_PAGE)
+    return render_template('index.html', data=dic, form=form, title='简阅小说网', limit=Config.CHAPTER_PER_PAGE)
 
 
 @app.route('/subscribe/')

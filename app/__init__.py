@@ -22,7 +22,7 @@ configure_uploads(app, text)
 moment = Moment(app)
 babel = Babel(app)
 redis = Redis.from_url(app.config['REDIS_URL'])
-app.task_queue = rq.Queue('novelreader-tasks', connection=redis)
+app.task_queue = rq.Queue('lightreader-tasks', connection=redis)
 
 from app import models, routes
 

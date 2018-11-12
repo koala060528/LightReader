@@ -11,4 +11,4 @@ sudo apt install redis-server
 
 然后运行：
 
-rq worker novelreader-tasks
+rq worker lightreader-tasks

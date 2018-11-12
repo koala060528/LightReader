@@ -8,7 +8,7 @@ class Config(object):
     D_PASSWORD = os.environ.get('D_PASSWORD') or 'hengli43'
     D_HOST = '127.0.0.1'
     D_PORT = 3306
-    D_DATABASE = 'novelreader'
+    D_DATABASE = 'lightreader'
     # sql连接字符串
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://%s:%s@%s:%s/%s' % (D_USER, D_PASSWORD, D_HOST, D_PORT, D_DATABASE)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
