@@ -95,12 +95,13 @@ def index():
     if current_user.is_authenticated:
         dic['subscribe'] = []
         for s in current_user.subscribing:
-            js = get_response('http://api.zhuishushenqi.com/book/' + s.book_id)
+            js = get_response('http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id)
+            t = datetime.strptime(js[0]['updated'], UTC_FORMAT)
             dic['subscribe'].append({
-                'title': js['title'],
+                'title': s.book_name,
                 '_id': s.book_id,
-                'last_chapter': js['lastChapter'],
-                'updated': js['updated']
+                'last_chapter': js[0]['lastChapter'],
+                'updated': t
             })
     # 获取榜单信息
     # todo

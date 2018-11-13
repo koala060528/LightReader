@@ -7,7 +7,7 @@ cursor = conn.cursor()
 cursor.execute("show databases like 'lightreader'")
 create_db = cursor.fetchall()
 if not create_db:
-    cursor.execute('create database novelreader')
+    cursor.execute('create database lightreader')
 cursor.close()
 conn.close()
 
