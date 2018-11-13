@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    {% if form %}
+        {{ wtf.quick_form(form) }}
+    {% endif %}
+    {% if lis %}
+        {% for book in lis %}
+            {% include '_book.html' %}
+
+        {% endfor %}
+    {% endif %}
+{% endblock %}

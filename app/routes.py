@@ -709,3 +709,19 @@ def read_setting():
         current_user.font_size = font_size
         db.session.commit()
         return 1
+
+
+@app.route('/author/<author_name>', methods=['GET'])
+def author(author_name):
+    data = get_response('http://api.zhuishushenqi.com/book/accurate-search?author=' + author_name)
+    lis = list()
+    for book in data['books']:
+        lis.append({
+            '_id': book['_id'],
+            'title': book['title'],
+            'cover': book['cover'],
+            'retentionRatio': book['retentionRatio'],
+            'latelyFollower': book['latelyFollower'],
+            'author': author_name
+        })
+    return render_template('author.html', title=author_name, lis=lis)

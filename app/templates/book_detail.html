@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 
 {% block app_content %}
-    <b>{{ data.get('title') }}</b>
-    <p>作者：{{ data.get('author') }}</p>
+    <b>{{ data.get('title') }}</b><hr>
+    <p>作者：<a href="{{ url_for('author',author_name=data.get('author')) }}">{{ data.get('author') }}</a>
+        </p>
     <p>简介：</p>
     {% for p in data.get('longIntro') %}
         <p style="font-size: 100%">
