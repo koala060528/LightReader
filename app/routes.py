@@ -10,6 +10,8 @@ from time import time
 import requests
 from config import Config
 from hashlib import md5
+import asyncio, aiohttp
+import time
 
 
 def get_response(url):
@@ -23,6 +25,13 @@ def get_response(url):
         except:
             i += 1
     return js
+
+
+async def async_get_response(url, res):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            assert resp.status == 200
+            res.append(await resp.json())
 
 
 @app.before_request
@@ -94,15 +103,33 @@ def index():
     # 获取订阅信息
     if current_user.is_authenticated:
         dic['subscribe'] = []
+        subscribe_url = list()
         for s in current_user.subscribing:
-            js = get_response('http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id)
-            t = datetime.strptime(js[0]['updated'], UTC_FORMAT)
-            dic['subscribe'].append({
-                'title': s.book_name,
-                '_id': s.book_id,
-                'last_chapter': js[0]['lastChapter'],
-                'updated': t
-            })
+            subscribe_url.append('http://api.zhuishushenqi.com/book/' + s.book_id)
+            # js = get_response('http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id)
+            # t = datetime.strptime(js[0]['updated'], UTC_FORMAT)
+            # dic['subscribe'].append({
+            #     'title': s.book_name,
+            #     '_id': s.book_id,
+            #     'last_chapter': js[0]['lastChapter'],
+            #     'updated': t
+            # })
+        if len(subscribe_url) > 0:
+            res = list()
+            # 手动创建事件循环
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            loop = asyncio.get_event_loop()
+            tasks = [async_get_response(url=url, res=res) for url in subscribe_url]
+            loop.run_until_complete(asyncio.wait(tasks))
+
+            for js in res:
+                t = datetime.strptime(js['updated'], UTC_FORMAT)
+                dic['subscribe'].append({
+                    'title': js['title'],
+                    '_id': js['_id'],
+                    'last_chapter': js['lastChapter'],
+                    'updated': t
+                })
     # 获取榜单信息
     # todo
 
