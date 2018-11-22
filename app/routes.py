@@ -27,11 +27,11 @@ def get_response(url):
     return js
 
 
-async def async_get_response(url, res):
+async def async_get_response(key, url, res):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             assert resp.status == 200
-            res.append(await resp.json())
+            res[key] = await resp.json()
 
 
 @app.before_request
@@ -99,47 +99,44 @@ def delete_user(id):
 # @login_required
 def index():
     dic = {}
-
+    subscribe_lis = list()
+    res = dict()
+    # 手动创建事件循环
+    asyncio.set_event_loop(asyncio.new_event_loop())
+    loop = asyncio.get_event_loop()
     # 获取订阅信息
     if current_user.is_authenticated:
         dic['subscribe'] = []
-        subscribe_url = list()
         for s in current_user.subscribing:
-            subscribe_url.append('http://api.zhuishushenqi.com/book/' + s.book_id)
-            # js = get_response('http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id)
-            # t = datetime.strptime(js[0]['updated'], UTC_FORMAT)
-            # dic['subscribe'].append({
-            #     'title': s.book_name,
-            #     '_id': s.book_id,
-            #     'last_chapter': js[0]['lastChapter'],
-            #     'updated': t
-            # })
-        if len(subscribe_url) > 0:
-            res = list()
-            # 手动创建事件循环
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            loop = asyncio.get_event_loop()
-            tasks = [async_get_response(url=url, res=res) for url in subscribe_url]
-            loop.run_until_complete(asyncio.wait(tasks))
+            subscribe_lis.append(
+                (s.book_id, s.book_name, 'http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id))
 
-            for js in res:
-                t = datetime.strptime(js['updated'], UTC_FORMAT)
-                dic['subscribe'].append({
-                    'title': js['title'],
-                    '_id': js['_id'],
-                    'last_chapter': js['lastChapter'],
-                    'updated': t
-                })
     # 获取榜单信息
     # todo
 
     # 获取分类
     data = get_response('http://api.zhuishushenqi.com/cats/lv2/statistics')
+    tasks = [async_get_response(key=book_id, url=url, res=res) for book_id, book_name, url in subscribe_lis]
+    tasks.append(async_get_response(key='classify', url='http://api.zhuishushenqi.com/cats/lv2/statistics', res=res))
+
+    # 异步获取
+    loop.run_until_complete(asyncio.wait(tasks))
+
+    for book_id, book_name, url in subscribe_lis:
+        js = res[book_id]
+        t = datetime.strptime(js[0]['updated'], UTC_FORMAT)
+        dic['subscribe'].append({
+            'title': book_name,
+            '_id': js[0]['_id'],
+            'last_chapter': js[0]['lastChapter'],
+            'updated': t
+        })
+
     # 预分组
     # data['male'] = [data['male'][i:i + 3] for i in range(0, len(data['male']), 3)]
     # data['female'] = [data['female'][i:i + 3] for i in range(0, len(data['female']), 3)]
     # data['press'] = [data['press'][i:i + 3] for i in range(0, len(data['press']), 3)]
-    dic['classify'] = data
+    dic['classify'] = res['classify']
 
     # 搜索框
     form = SearchForm()
