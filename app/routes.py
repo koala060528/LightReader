@@ -115,7 +115,7 @@ def index():
     # todo
 
     # 获取分类
-    data = get_response('http://api.zhuishushenqi.com/cats/lv2/statistics')
+    # data = get_response('http://api.zhuishushenqi.com/cats/lv2/statistics')
     tasks = [async_get_response(key=book_id, url=url, res=res) for book_id, book_name, url in subscribe_lis]
     tasks.append(async_get_response(key='classify', url='http://api.zhuishushenqi.com/cats/lv2/statistics', res=res))
 
