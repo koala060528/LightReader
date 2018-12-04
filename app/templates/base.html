@@ -8,12 +8,6 @@
     {% endif %}
 {% endblock %}
 
-{% block head %}                                                                                    
-{{ super() }}                                                                           
-<link rel="shortcut icon" href="{{ url_for('static',filename = 'read.ico') }}" type="image/x-ico">
-<link rel="icon" href="{{ url_for('static',filename = 'read.ico') }}" type="image/x-ico">
-{% endblock %}
-
 {% block navbar %}
     <nav class="navbar navbar-default">
         <div class="container">
