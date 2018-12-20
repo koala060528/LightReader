@@ -107,7 +107,7 @@ def index():
     # 获取订阅信息
     if current_user.is_authenticated:
         dic['subscribe'] = []
-        for s in current_user.subscribing:
+        for s in current_user.subscribing.order_by(Subscribe.time.desc()):
             subscribe_lis.append(
                 (s.book_id, s.book_name, 'http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id))
 
