@@ -12,6 +12,7 @@ from config import Config
 from hashlib import md5
 import asyncio, aiohttp
 import time
+from time import sleep
 
 
 def get_response(url):
@@ -24,6 +25,7 @@ def get_response(url):
             break
         except:
             i += 1
+        sleep(0.5)
     return js
 
 
