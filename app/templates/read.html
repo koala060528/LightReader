@@ -3,6 +3,28 @@
 {% block app_content %}
     <h1 style="text-align: center">{{ title }}</h1>
     <br>
+    <div align="center" style="margin-bottom:20px">
+        {% if pre is not none %}
+            <tr>
+                <a style="font-size: 125%"
+                   href="{{ url_for('read',index=pre,book_id=book_id,source_id=source_id) }}">上一章</a>
+            </tr>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        {% endif %}
+
+        <tr>
+            <a style="font-size: 125%"
+               href="{{ url_for('chapter',book_id=book_id,page=page,source_id=source_id) }}">目录</a>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </tr>
+        {% if next is not none %}
+            <tr>
+                <a style="font-size: 125%"
+                   href="{{ url_for('read',index=next,book_id=book_id,source_id=source_id) }}">下一章</a>
+            </tr>
+        {% endif %}
+    </div>
+    <hr>
     <body>
     {% for p in body %}
         <p style="font-size: {{ font_size }}">
@@ -11,46 +33,44 @@
     {% endfor %}
     </body>
     <hr>
-    <div align="center">
+    <div align="center" style="margin-bottom:10px">
         {% if pre is not none %}
             <tr>
                 <a style="font-size: 125%"
                    href="{{ url_for('read',index=pre,book_id=book_id,source_id=source_id) }}">上一章</a>
             </tr>
-            &nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         {% endif %}
 
         <tr>
             <a style="font-size: 125%"
                href="{{ url_for('chapter',book_id=book_id,page=page,source_id=source_id) }}">目录</a>
-            &nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         </tr>
         {% if next is not none %}
             <tr>
                 <a style="font-size: 125%"
                    href="{{ url_for('read',index=next,book_id=book_id,source_id=source_id) }}">下一章</a>
-                &nbsp;&nbsp;
             </tr>
         {% endif %}
     </div>
-    <div align="center">
+    <div align="center" style="margin-bottom:10px">
         <tr>
             <a style="font-size: 125%" href="{{ url_for('book_detail',book_id=book_id) }}">详情</a>
-            &nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;
         </tr>
         <tr>
             <a style="font-size: 125%"
                href="{{ url_for('source', book_id=book_id,page=page,source_id=source_id) }}">换源</a>
-            &nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;
         </tr>
         <tr>
             <a style="font-size: 125%"
                href="{{ url_for('read_setting',index=index,book_id=book_id,source_id=source_id) }}">设置</a>
-            &nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;
         </tr>
         <tr>
             <a style="font-size: 125%" href="{{ url_for('index') }}">主页</a>
-            &nbsp;&nbsp;
         </tr>
     </div>
 
