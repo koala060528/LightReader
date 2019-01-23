@@ -1,0 +1,23 @@
+<table>
+    <tr>
+        <td style="font-size:large">
+            <a href="{{ url_for('book_detail', book_id=book['book']['_id']) }}">
+                {{ book['book']['title'] }}
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            {{ book['book']['author'] }}
+        </td>
+    </tr>
+    <tr>
+        <td>热度:{{ book['book']['latelyFollower'] }}&nbsp;&nbsp;&nbsp;留存率:{{ '%.2f' % book['book']['retentionRatio'] }}&nbsp;&nbsp;&nbsp;字数:{{ book['book']['wordCount'] }}
+        </td>
+    </tr>
+    <tr>
+        <td>评语:{{ book['comment'] }}</td>
+    </tr>
+</table>
+
+<hr>

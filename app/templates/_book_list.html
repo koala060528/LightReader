@@ -1,0 +1,19 @@
+<table>
+    <tr style="font-size: large">
+        <td style="font-size:large" >
+            <a href="{{ url_for('book_list_detail',_id=bookList['_id']) }}">{{ bookList['title'] }}</a>
+
+        </td>
+    </tr>
+    <tr>
+        <td>
+            书籍数量:{{ bookList['bookCount'] }}&nbsp;&nbsp;&nbsp;收藏次数:{{ bookList['collectorCount'] }}
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size: small">
+            简介:{{ bookList['desc'] }}
+        </td>
+    </tr>
+</table>
+<hr>

@@ -19,7 +19,7 @@ class Config(object):
     # 语言设置
     LANGUAGES = ['zh-CN']
 
-    # 每页显示的blog数量
+    # 每页显示的数量
     CHAPTER_PER_PAGE = 50
 
     # api url

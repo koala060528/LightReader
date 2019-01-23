@@ -150,7 +150,7 @@ def index():
         lis = []
         for book in data.get('books'):
             lis.append(book)
-        return render_template('book_list.html', data=lis, title='搜索结果', form=form)
+        return render_template('search_result.html', data=lis, title='搜索结果', form=form)
 
     return render_template('index.html', data=dic, form=form, title='简阅', limit=Config.CHAPTER_PER_PAGE)
 
@@ -340,8 +340,8 @@ def get_content_list(url, key=None):
 #         lis = []
 #         for book in data.get('books'):
 #             lis.append(book)
-#         return render_template('book_list.html', data=lis, title='搜索结果')
-#     return render_template('book_list.html', form=form, title='搜索')
+#         return render_template('search_result.html', data=lis, title='搜索结果')
+#     return render_template('search_result.html', form=form, title='搜索')
 
 
 UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -441,6 +441,7 @@ def source(book_id):
     return render_template('source.html', data=data[1:], title='换源', page=page, book_id=book_id)
 
 
+# 分类
 @app.route('/classify', methods=['GET'])
 def classify():
     gender = request.args.get('gender')
@@ -464,12 +465,42 @@ def classify():
                            limit=int(limit), next=next_page)
 
 
+# 书单列表
+@app.route('/book_list_rank', methods=['GET'])
+def book_list_rank():
+    gender = request.args.get('gender')
+    duration = request.args.get('duration')
+    start = request.args.get('start')
+    limit = str(Config.CHAPTER_PER_PAGE)
+    tag = request.args.get('tag')
+    data = get_response('http://api.zhuishushenqi.com/book-list?' + (('&gender=' + gender) if gender else '') + (
+        ('&duration=' + duration) if duration else '') + (('&start=' + start) if start else '') + (
+                            ('&limit=' + limit) if limit else '') + (('&tag=' + tag) if tag else ''))
+    next_page = True
+    if len(data) < Config.CHAPTER_PER_PAGE:
+        next_page = False
+    return render_template('book_list_rank.html', data=data, title='书单排行', gender=gender, duration=duration,
+                           start=int(start), limit=int(limit), tag=tag, next_page=next_page)
+
+
+# 书单详情
+@app.route('/bool_list_detail<_id>', methods=['GET'])
+def book_list_detail(_id):
+    data = get_response('http://api.zhuishushenqi.com/book-list/' + _id)
+    UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+    updated = datetime.strptime(data['bookList']['updated'], UTC_FORMAT)
+    created = datetime.strptime(data['bookList']['created'], UTC_FORMAT)
+    data['bookList']['updated'] = updated
+    data['bookList']['created'] = created
+    return render_template('book_list_detail.html', data=data, title=data['bookList']['title'])
+
+
+# 排行榜
 @app.route('/rank/<_id>', methods=['GET'])
 def rank(_id):
-    if _id:
-        data = get_response('http://api.zhuishushenqi.com/ranking/' + _id)
-        if data:
-            return render_template('rank.html', data=data)
+    data = get_response('http://api.zhuishushenqi.com/ranking/' + _id)
+    if data:
+        return render_template('rank.html', data=data)
 
 
 @app.route('/download', methods=['GET'])

@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    {% for bookList in data['bookLists'] %}
+        {% include '_book_list.html' %}
+    {% endfor %}
+{% endblock %}

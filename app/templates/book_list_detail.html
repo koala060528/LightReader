@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    <b>{{ data['bookList']['title'] }}</b>
+    <hr>
+    <p>作者：{{ data['bookList']['author']['nickname'] }}
+    </p>
+    <p>简介：</p>
+
+    <p style="font-size: 100%">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ data['bookList']['desc'] }}
+    </p>
+
+    <p>创建时间：{{ moment(data['bookList']['created']).fromNow() }}</p>
+    <p>最近更新：{{ moment(data['bookList']['updated']).fromNow() }}</p>
+
+    <hr>
+    {% for book in data['bookList']['books'] %}
+        {% include '_book_list_book.html' %}
+    {% endfor %}
+{% endblock %}
