@@ -4,7 +4,7 @@
 {% block app_content %}
     {% if not current_user.is_anonymous %}
         <p>欢迎，{{ current_user.name }}</p>
-        {% else %}
+    {% else %}
         <p>欢迎，旅行者</p>
     {% endif %}
 
@@ -17,22 +17,22 @@
         {#        <p style="font-weight: bold">订阅列表</p>#}
         {% if data.get('subscribe') %}
             {% for book in data.get('subscribe') %}
-            <table>
-                <tr>
-                    <a href="{{ url_for('book_detail',book_id=book['_id']) }}">{{ book['title'] }}</a>
+                <table>
+                    <tr>
+                        <a href="{{ url_for('book_detail',book_id=book['_id']) }}">{{ book['title'] }}</a>
 
-                </tr>
-                <tr>
-                    <p>{{ book['last_chapter'] }}({{ moment(book['updated']).fromNow() }})</p>
-                </tr>
-            </table>
+                    </tr>
+                    <tr>
+                        <p>{{ book['last_chapter'] }}({{ moment(book['updated']).fromNow() }})</p>
+                    </tr>
+                </table>
 
-        {% endfor %}
-            {% else %}
-            <p>你的订阅列表是空的</p>
-            {% endif %}
-
+            {% endfor %}
         {% else %}
+            <p>你的订阅列表是空的</p>
+        {% endif %}
+
+    {% else %}
 
         <p>
             <a href="{{ url_for('login') }}"> 登录</a>以查看你的订阅列表
@@ -52,14 +52,14 @@
 
 
     {% if data['classify'] %}
-        <h3 style="font-size: large">发现</h3>
+        <h3 style="font-size: large">分类</h3>
         <table>
             <tr><p>男生</p></tr>
             <tr>
                 {% for i in data['classify']['male'] %}
 
                     <tr>
-                        <a href="{{ url_for('rank',gender='male',start=0,limit=limit,type='hot',major=i['name']) }}">{{ i['name'] }}</a>
+                        <a href="{{ url_for('classify',gender='male',start=0,limit=limit,type='hot',major=i['name']) }}">{{ i['name'] }}</a>
                         &nbsp;
                     </tr>
 
@@ -73,7 +73,7 @@
                 {% for i in data['classify']['female'] %}
 
                     <tr>
-                        <a href="{{ url_for('rank',gender='female',start=0,limit=limit,type='hot',major=i['name']) }}">{{ i['name'] }}</a>
+                        <a href="{{ url_for('classify',gender='female',start=0,limit=limit,type='hot',major=i['name']) }}">{{ i['name'] }}</a>
                         &nbsp;
                     </tr>
 
@@ -87,10 +87,38 @@
                 {% for i in data['classify']['press'] %}
 
                     <tr>
-                        <a href="{{ url_for('rank',gender='press',start=0,limit=limit,type='hot',major=i['name']) }}">{{ i['name'] }}</a>
+                        <a href="{{ url_for('classify',gender='press',start=0,limit=limit,type='hot',major=i['name']) }}">{{ i['name'] }}</a>
                         &nbsp;
                     </tr>
 
+                {% endfor %}
+            </tr>
+        </table>
+    {% endif %}
+
+    {% if data['rank'] %}
+        <hr>
+        <h3 style="font-size: large">排行</h3>
+        <table>
+            <tr><p>男生</p></tr>
+            <tr>
+                {% for i in data['rank']['male'] %}
+                    <tr>
+                        <a href="{{ url_for('rank',_id=i['_id']) }}">{{ i['shortTitle'] }}</a>
+                        &nbsp;
+                    </tr>
+                {% endfor %}
+            </tr>
+        </table>
+        <br>
+        <table>
+            <tr><p>女生</p></tr>
+            <tr>
+                {% for i in data['rank']['female'] %}
+                    <tr>
+                        <a href="{{ url_for('rank',_id=i['_id']) }}">{{ i['shortTitle'] }}</a>
+                        &nbsp;
+                    </tr>
                 {% endfor %}
             </tr>
         </table>

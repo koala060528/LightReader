@@ -2,28 +2,7 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-    {% if form %}
-        {{ wtf.quick_form(form) }}
-    {% endif %}
-    {% if data %}
-        {% for book in data %}
-            {% include '_book.html' %}
-
-        {% endfor %}
-    {% endif %}
-    <th>
-        {% if start > 0 %}
-            <a href="{{ url_for('rank',gender=gender,major=major,start=start - limit,limit=limit,type=type) }}">上一页</a>
-        {% else %}
-            上一页
-        {% endif %}
-    </th>
-    <th>
-        {% if next %}
-            <a href="{{ url_for('rank',gender=gender,major=major,start=start +  limit,limit=limit,type=type) }}">下一页</a>
-        {% else %}
-            下一页
-        {% endif %}
-    </th>
-
+    {% for book in data['ranking']['books'] %}
+        {% include '_book.html' %}
+    {% endfor %}
 {% endblock %}

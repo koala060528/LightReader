@@ -113,13 +113,14 @@ def index():
             subscribe_lis.append(
                 (s.book_id, s.book_name, 'http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id))
 
-    # 获取榜单信息
-    # todo
+    tasks = [async_get_response(key=book_id, url=url, res=res) for book_id, book_name, url in subscribe_lis]
 
     # 获取分类
     # data = get_response('http://api.zhuishushenqi.com/cats/lv2/statistics')
-    tasks = [async_get_response(key=book_id, url=url, res=res) for book_id, book_name, url in subscribe_lis]
     tasks.append(async_get_response(key='classify', url='http://api.zhuishushenqi.com/cats/lv2/statistics', res=res))
+
+    # 获取榜单信息
+    tasks.append(async_get_response(key='rank', url='http://api.zhuishushenqi.com/ranking/gender', res=res))
 
     # 异步获取
     loop.run_until_complete(asyncio.wait(tasks))
@@ -139,6 +140,8 @@ def index():
     # data['female'] = [data['female'][i:i + 3] for i in range(0, len(data['female']), 3)]
     # data['press'] = [data['press'][i:i + 3] for i in range(0, len(data['press']), 3)]
     dic['classify'] = res['classify']
+
+    dic['rank'] = res['rank']
 
     # 搜索框
     form = SearchForm()
@@ -438,8 +441,8 @@ def source(book_id):
     return render_template('source.html', data=data[1:], title='换源', page=page, book_id=book_id)
 
 
-@app.route('/rank', methods=['GET'])
-def rank():
+@app.route('/classify', methods=['GET'])
+def classify():
     gender = request.args.get('gender')
     _type = request.args.get('type')
     major = request.args.get('major')
@@ -456,8 +459,17 @@ def rank():
     next_page = True
     if len(data) < Config.CHAPTER_PER_PAGE:
         next_page = False
-    return render_template('rank.html', data=data, title='探索', gender=gender, type=_type, major=major, start=int(start),
+    return render_template('classify.html', data=data, title='探索', gender=gender, type=_type, major=major,
+                           start=int(start),
                            limit=int(limit), next=next_page)
+
+
+@app.route('/rank/<_id>', methods=['GET'])
+def rank(_id):
+    if _id:
+        data = get_response('http://api.zhuishushenqi.com/ranking/' + _id)
+        if data:
+            return render_template('rank.html', data=data)
 
 
 @app.route('/download', methods=['GET'])
