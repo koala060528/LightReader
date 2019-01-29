@@ -11,19 +11,25 @@
 
         {% endfor %}
     {% endif %}
-    <th>
-        {% if start > 0 %}
-            <a href="{{ url_for('classify',gender=gender,major=major,start=start - limit,limit=limit,type=type) }}">上一页</a>
-        {% else %}
-            上一页
-        {% endif %}
-    </th>
-    <th>
-        {% if next %}
-            <a href="{{ url_for('classify',gender=gender,major=major,start=start +  limit,limit=limit,type=type) }}">下一页</a>
-        {% else %}
-            下一页
-        {% endif %}
-    </th>
-
+    <div align="center" style="margin-bottom:20px">
+        <table>
+            <tr style="font-size: 125%">
+                <td>
+                    {% if start > 0 %}
+                        <a href="{{ url_for('classify',gender=gender,major=major,start=start - limit,limit=limit,type=type) }}">上一页</a>
+                    {% else %}
+                        上一页
+                    {% endif %}
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </td>
+                <td>
+                    {% if next %}
+                        <a href="{{ url_for('classify',gender=gender,major=major,start=start +  limit,limit=limit,type=type) }}">下一页</a>
+                    {% else %}
+                        下一页
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
 {% endblock %}

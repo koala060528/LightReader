@@ -5,16 +5,25 @@
         {% include '_book_list.html' %}
     {% endfor %}
 
-    {% if start > 0 %}
-        <a href="{{ url_for('book_list_rank',gender=gender,sort=sort,duration=duration,start=start - 20) }}">上一页</a>
-    {% else %}
-        上一页
-    {% endif %}
-    &nbsp;&nbsp;&nbsp;
-    {% if next_page %}
-        <a href="{{ url_for('book_list_rank',gender=gender,sort=sort,duration=duration,start=start + 20) }}">下一页</a>
-    {% else %}
-        下一页
-    {% endif %}
-
+    <div align="center" style="margin-bottom:20px">
+        <table>
+            <tr style="font-size: 125%">
+                <td>
+                    {% if start > 0 %}
+                        <a href="{{ url_for('book_list_rank',gender=gender,sort=sort,duration=duration,start=start - 20) }}">上一页</a>
+                    {% else %}
+                        上一页
+                    {% endif %}
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </td>
+                <td>
+                    {% if next_page %}
+                        <a href="{{ url_for('book_list_rank',gender=gender,sort=sort,duration=duration,start=start + 20) }}">下一页</a>
+                    {% else %}
+                        下一页
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
 {% endblock %}
