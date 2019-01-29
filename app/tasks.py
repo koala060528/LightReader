@@ -31,7 +31,7 @@ def download(user_id, source_id, book_id):
         u = User.query.get(user_id)
 
         # 获取章节信息
-        data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
+        data = get_response('http://novel.juhe.im/book-chapters/' + source_id)
         path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
         if not os.path.exists(path):
             os.makedirs(path)
@@ -55,7 +55,7 @@ def download(user_id, source_id, book_id):
         else:
             new = True
             # 获取书籍简介
-            data1 = get_response('http://api.zhuishushenqi.com/book/' + book_id)
+            data1 = get_response('http://novel.juhe.im/book-info/' + book_id)
             book_title = data1.get('title')
             author = data1.get('author')
             longIntro = data1.get('longIntro')

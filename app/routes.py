@@ -13,7 +13,7 @@ from hashlib import md5
 import asyncio, aiohttp
 import time
 from time import sleep
-
+from redis.exceptions import ConnectionError
 
 def get_response(url):
     i = 0
@@ -111,27 +111,27 @@ def index():
         dic['subscribe'] = []
         for s in current_user.subscribing.order_by(Subscribe.time.desc()):
             subscribe_lis.append(
-                (s.book_id, s.book_name, 'http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id))
+                (s.book_id, s.book_name, 'https://novel.juhe.im/book-info/' + s.book_id))
 
     tasks = [async_get_response(key=book_id, url=url, res=res) for book_id, book_name, url in subscribe_lis]
 
     # 获取分类
     # data = get_response('http://api.zhuishushenqi.com/cats/lv2/statistics')
-    tasks.append(async_get_response(key='classify', url='http://api.zhuishushenqi.com/cats/lv2/statistics', res=res))
+    tasks.append(async_get_response(key='classify', url='https://novel.juhe.im/categories', res=res))
 
     # 获取榜单信息
-    tasks.append(async_get_response(key='rank', url='http://api.zhuishushenqi.com/ranking/gender', res=res))
+    tasks.append(async_get_response(key='rank', url='https://novel.juhe.im/rank-category', res=res))
 
     # 异步获取
     loop.run_until_complete(asyncio.wait(tasks))
 
     for book_id, book_name, url in subscribe_lis:
         js = res[book_id]
-        t = datetime.strptime(js[0]['updated'], UTC_FORMAT)
+        t = datetime.strptime(js['updated'], UTC_FORMAT)
         dic['subscribe'].append({
             'title': book_name,
-            '_id': js[0]['_id'],
-            'last_chapter': js[0]['lastChapter'],
+            '_id': js['_id'],
+            'last_chapter': js['lastChapter'],
             'updated': t
         })
 
@@ -146,7 +146,7 @@ def index():
     # 搜索框
     form = SearchForm()
     if form.validate_on_submit():
-        data = get_response('http://api.zhuishushenqi.com/book/fuzzy-search/?query=' + form.search.data)
+        data = get_response('http://novel.juhe.im/search?keyword=' + form.search.data)
         lis = []
         for book in data.get('books'):
             lis.append(book)
@@ -159,13 +159,13 @@ def index():
 @login_required
 def subscribe():
     _id = request.args.get('id')
-    js = get_response('http://api.zhuishushenqi.com/book/' + _id)
+    js = get_response('https://novel.juhe.im/book-info/' + _id)
     name = js.get('title')
     if not name:
         flash('这本书不存在')
         return redirect(url_for('index'))
 
-    data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + _id)
+    data = get_response('https://novel.juhe.im/book-sources?view=summary&book=' + _id)
 
     s = Subscribe(user=current_user, book_id=_id, book_name=name, source_id=data[1]['_id'], chapter=0)
     db.session.add(s)
@@ -195,7 +195,7 @@ def unsubscribe():
 def chapter(source_id):
     page = request.args.get('page')
     book_id = request.args.get('book_id')
-    data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
+    data = get_response('http://novel.juhe.im/book-chapters/' + source_id)
     lis = []
     l = []
     chap = data.get('chapters')
@@ -233,7 +233,7 @@ def read():
     index = int(request.args.get('index'))
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
-    data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
+    data = get_response('http://novel.juhe.im/book-chapters/' + source_id)
     page = int(index / Config.CHAPTER_PER_PAGE)
     chap = data.get('chapters')
     title = chap[index]['title']
@@ -320,10 +320,14 @@ def get_content_text(url):
 
 
 def get_content_list(url, key=None):
-    if key and redis.exists(key):
-        txt = redis.get(key).decode()
-    else:
-        txt = get_content_text(url)
+    if key:
+        try:
+            if redis.exists(key):
+                txt = redis.get(key).decode()
+            else:
+                txt = get_content_text(url)
+        except ConnectionError:
+            txt = get_content_text(url)
     lis = txt.split('\n')
     li = []
     for l in lis:
@@ -366,7 +370,7 @@ def local2utc(local_st):
 @app.route('/book_detail', methods=['GET'])
 def book_detail():
     book_id = request.args.get('book_id')
-    data = get_response('http://api.zhuishushenqi.com/book/' + book_id)
+    data = get_response('http://novel.juhe.im/book-info/' + book_id)
     # t = data['updated']  # = datetime(data['updated']).strftime('%Y-%m-%d %H:%M:%S')
     # t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
     # data['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
@@ -389,7 +393,7 @@ def book_detail():
             if s.chapter:
                 c = int(s.chapter)
             data['reading'] = c
-            dd = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
+            dd = get_response('http://novel.juhe.im/book-chapters/' + source_id)
             chap = dd.get('chapters')
             if chap[-1].get('title') == data.get('lastChapter'):
                 lastIndex = len(chap) - 1  # 用来标记最新章节
@@ -399,14 +403,14 @@ def book_detail():
             else:
                 data['readingChapter'] = chap[c]['title']
         else:
-            dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
+            dd = get_response('http://novel.juhe.im/book-sources?view=summary&book=' + book_id)
             for i in range(len(dd))[::-1]:
                 if dd[i]['source'] != 'zhuishuvip':
                     source_id = dd[i]['_id']
                     if dd[i]['source'] == 'my176':
                         break
     else:
-        dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
+        dd = get_response('http://novel.juhe.im/book-sources?view=summary&book=' + book_id)
         for i in range(len(dd))[::-1]:
             if dd[i]['source'] != 'zhuishuvip':
                 source_id = dd[i]['_id']
@@ -428,7 +432,7 @@ def book_detail():
 @app.route('/source/<book_id>', methods=['GET'])
 def source(book_id):
     page = request.args.get('page')
-    data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
+    data = get_response('http://novel.juhe.im/book-sources?view=summary&book=' + book_id)
     for s in data:
         UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
         t = datetime.strptime(s['updated'], UTC_FORMAT)
@@ -453,7 +457,7 @@ def classify():
     # tag = request.args.get('tag')
     limit = str(Config.CHAPTER_PER_PAGE)
     data = get_response(
-        'http://api.zhuishushenqi.com/book/by-categories?' + (('&major=' + major) if major else '') + (
+        'https://novel.juhe.im/category-info?' + (('&major=' + major) if major else '') + (
             ('&gender=' + gender) if gender else '') + (('&type=' + _type) if _type else '') + (
             ('&start=' + start) if start else '') + (('&limit=' + limit) if limit else ''))
     data = data['books']
@@ -471,22 +475,23 @@ def book_list_rank():
     gender = request.args.get('gender')
     duration = request.args.get('duration')
     start = request.args.get('start')
-    limit = str(Config.CHAPTER_PER_PAGE)
-    tag = request.args.get('tag')
-    data = get_response('http://api.zhuishushenqi.com/book-list?' + (('&gender=' + gender) if gender else '') + (
-        ('&duration=' + duration) if duration else '') + (('&start=' + start) if start else '') + (
-                            ('&limit=' + limit) if limit else '') + (('&tag=' + tag) if tag else ''))
-    next_page = True
-    if len(data) < Config.CHAPTER_PER_PAGE:
-        next_page = False
-    return render_template('book_list_rank.html', data=data, title='书单排行', gender=gender, duration=duration,
-                           start=int(start), limit=int(limit), tag=tag, next_page=next_page)
+    sort = request.args.get('sort')
+    limit = '20'
+    # tag = request.args.get('tag')
+    data = get_response('https://novel.juhe.im/booklists?' + (('&gender=' + gender) if gender else '') + (
+        ('&start=' + start) if start else '') + (('&duration=' + duration) if duration else '') + (
+                            ('&sort=' + sort) if sort else '') + (('&limit=' + limit) if limit else ''))
+    next_page = False
+    if data['total'] > 0:
+        next_page = True
+    return render_template('book_list_rank.html', data=data, title='书单排行', gender=gender,
+                           start=int(start), duration=duration, sort=sort, next_page=next_page, limit=20)
 
 
 # 书单详情
 @app.route('/bool_list_detail<_id>', methods=['GET'])
 def book_list_detail(_id):
-    data = get_response('http://api.zhuishushenqi.com/book-list/' + _id)
+    data = get_response('https://novel.juhe.im/booklists/' + _id)
     UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
     updated = datetime.strptime(data['bookList']['updated'], UTC_FORMAT)
     created = datetime.strptime(data['bookList']['created'], UTC_FORMAT)
@@ -498,9 +503,9 @@ def book_list_detail(_id):
 # 排行榜
 @app.route('/rank/<_id>', methods=['GET'])
 def rank(_id):
-    data = get_response('http://api.zhuishushenqi.com/ranking/' + _id)
+    data = get_response('http://novel.juhe.im/rank/' + _id)
     if data:
-        return render_template('rank.html', data=data)
+        return render_template('rank.html', title='排行', data=data)
 
 
 @app.route('/download', methods=['GET'])
@@ -513,7 +518,7 @@ def download():
             return render_template('permission_denied.html', title='权限不足', message='下载功能并非向所有人开放，请联系管理员索取权限')
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
-    data = get_response('http://api.zhuishushenqi.com/book/' + book_id)
+    data = get_response('http://novel.juhe.im/book-info/' + book_id)
     book_name = data.get('title')
 
     d = Download.query.filter_by(book_id=book_id, source_id=source_id).first()
@@ -526,7 +531,7 @@ def download():
             return redirect(url_for('book_detail', book_id=book_id))
         else:
             # 检测服务器是否已经下载了文件的最新版本
-            data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
+            data = get_response('http://novel.juhe.im/book-sources?view=summary&book=' + source_id)
             chapter_list = data.get('chapters')
             download_list = chapter_list[d.chapter + 1:]
 
@@ -687,7 +692,7 @@ def download_list():
     lis = list()
     path = os.path.join(Config.UPLOADS_DEFAULT_DEST, 'downloads')
     for d in ds:
-        data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(d.source_id))
+        data = get_response('http://novel.juhe.im/book-sources?view=summary&book=' + d.source_id)
         source_name = data.get('name')
         if os.path.exists(os.path.join(path, d.txt_name)):
             txt_size = os.path.getsize(os.path.join(path, d.txt_name))
@@ -782,7 +787,7 @@ def read_setting():
 
 @app.route('/author/<author_name>', methods=['GET'])
 def author(author_name):
-    data = get_response('http://api.zhuishushenqi.com/book/accurate-search?author=' + author_name)
+    data = get_response('http://novel.juhe.im/author-books?author=' + author_name)
     lis = list()
     for book in data['books']:
         lis.append({
