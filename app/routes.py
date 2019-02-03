@@ -126,14 +126,22 @@ def index():
     loop.run_until_complete(asyncio.wait(tasks))
 
     for book_id, book_name, url in subscribe_lis:
-        js = res[book_id]
-        t = datetime.strptime(js['updated'], UTC_FORMAT)
-        dic['subscribe'].append({
-            'title': book_name,
-            '_id': js['_id'],
-            'last_chapter': js['lastChapter'],
-            'updated': t
-        })
+        js = res.get(book_id)
+        if js:
+            t = datetime.strptime(js['updated'], UTC_FORMAT)
+            dic['subscribe'].append({
+                'title': book_name,
+                '_id': book_id,
+                'last_chapter': js['lastChapter'],
+                'updated': t
+            })
+        else:
+            dic['subscribe'].append({
+                'title': book_name,
+                '_id': book_id,
+                'last_chapter': None,
+                'updated': None
+            })
 
     # 预分组
     # data['male'] = [data['male'][i:i + 3] for i in range(0, len(data['male']), 3)]

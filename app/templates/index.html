@@ -23,7 +23,11 @@
 
                     </tr>
                     <tr>
-                        <p>{{ book['last_chapter'] }}({{ moment(book['updated']).fromNow() }})</p>
+                        {% if book['last_chapter'] %}
+                            <p>{{ book['last_chapter'] }}({{ moment(book['updated']).fromNow() }})</p>
+                        {% else %}
+                            <p style="font-style:italic">获取更新失败，请重试</p>
+                        {% endif %}
                     </tr>
                 </table>
 
