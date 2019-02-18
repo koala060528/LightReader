@@ -24,11 +24,14 @@ class Config(object):
 
     # api url
     # 书籍详情页
-    BOOK_DETAIL = 'http://novel.juhe.im/book-info/{book_id}'
+    # BOOK_DETAIL = 'http://novel.juhe.im/book-info/{book_id}'
+    BOOK_DETAIL = 'http://api.zhuishushenqi.com/book/{book_id}'
     # 章节列表
-    CHAPTER_LIST = 'http://novel.juhe.im/book-chapters/{book_id}'
+    # CHAPTER_LIST = 'http://novel.juhe.im/book-chapters/{book_id}'
+    CHAPTER_LIST = 'http://api.zhuishushenqi.com/mix-atoc/{book_id}?view=chapters'
     # 章节详情
-    CHAPTER_DETAIL = 'http://novel.juhe.im/chapters/{0}'
+    # CHAPTER_DETAIL = 'http://novel.juhe.im/chapters/{0}'
+    CHAPTER_DETAIL = 'http://chapter2.zhuishushenqi.com/chapter/{0}'
 
     # 文件目录
     UPLOADS_DEFAULT_DEST = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'files')
