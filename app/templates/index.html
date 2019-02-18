@@ -23,7 +23,11 @@
 
                     </tr>
                     <tr>
-                        <p>{{ book['last_chapter'] }}({{ moment(book['updated']).fromNow() }})</p>
+                        {% if book['last_chapter'] %}
+                            <p>{{ book['last_chapter'] }}({{ moment(book['updated']).fromNow() }})</p>
+                        {% else %}
+                            <p style="font-style:italic">获取更新失败，请重试</p>
+                        {% endif %}
                     </tr>
                 </table>
 
@@ -126,7 +130,7 @@
 
 
     <hr>
-    <h4 style="font-size: large">排行</h4>
+    <h4 style="font-size: large">书单</h4>
     <table>
         <tr><p>男频</p></tr>
         <tr>

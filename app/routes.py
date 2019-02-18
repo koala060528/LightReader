@@ -129,22 +129,30 @@ def index():
     loop.run_until_complete(asyncio.wait(tasks))
 
     for book_id, book_name, url in subscribe_lis:
-        js = res[book_id]
-        t = datetime.strptime(js['updated'], UTC_FORMAT)
-        dic['subscribe'].append({
-            'title': book_name,
-            '_id': js['_id'],
-            'last_chapter': js['lastChapter'],
-            'updated': t
-        })
+        js = res.get(book_id)
+        if js and js.get('ok') is None:
+            t = datetime.strptime(js['updated'], UTC_FORMAT)
+            dic['subscribe'].append({
+                'title': book_name,
+                '_id': book_id,
+                'last_chapter': js['lastChapter'],
+                'updated': t
+            })
+        else:
+            dic['subscribe'].append({
+                'title': book_name,
+                '_id': book_id,
+                'last_chapter': None,
+                'updated': None
+            })
 
     # 预分组
     # data['male'] = [data['male'][i:i + 3] for i in range(0, len(data['male']), 3)]
     # data['female'] = [data['female'][i:i + 3] for i in range(0, len(data['female']), 3)]
     # data['press'] = [data['press'][i:i + 3] for i in range(0, len(data['press']), 3)]
-    dic['classify'] = res['classify']
+    dic['classify'] = res.get('classify')
 
-    dic['rank'] = res['rank']
+    dic['rank'] = res.get('rank')
 
     # 搜索框
     form = SearchForm()
