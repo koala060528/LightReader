@@ -130,12 +130,12 @@ def index():
 
     for book_id, book_name, url in subscribe_lis:
         js = res.get(book_id)
-        if js and js.get('ok') is None:
-            t = datetime.strptime(js['updated'], UTC_FORMAT)
+        if js:
+            t = datetime.strptime(js[0]['updated'], UTC_FORMAT)
             dic['subscribe'].append({
                 'title': book_name,
                 '_id': book_id,
-                'last_chapter': js['lastChapter'],
+                'last_chapter': js[0]['lastChapter'],
                 'updated': t
             })
         else:
