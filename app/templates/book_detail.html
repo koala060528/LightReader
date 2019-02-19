@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 
 {% block app_content %}
-    <b>{{ data.get('title') }}</b><hr>
+    <b>{{ data.get('title') }}</b>
+    <hr>
     <p>作者：<a href="{{ url_for('author',author_name=data.get('author')) }}">{{ data.get('author') }}</a>
-        </p>
+    </p>
     <p>简介：</p>
     {% for p in data.get('longIntro') %}
         <p style="font-size: 100%">
@@ -11,7 +12,7 @@
         </p>
     {% endfor %}
     <p>最近更新：{{ moment(data.get('updated')).fromNow() }}</p>
-    {% if lastIndex %}
+    {% if is_subscribe %}
         <p>最新章节：
             <a href="{{ url_for('read',book_id=data.get('_id'),index=lastIndex,source_id=source_id) }}">{{ data.get('lastChapter') }}</a>
         </p>
@@ -20,33 +21,26 @@
     {% endif %}
 
 
-    {% if not current_user.is_anonymous %}
-        {% if data.get('is_subscribe') %}
-            <p>阅读进度：&nbsp;<a
-                    href="{{ url_for('read',book_id=data.get('_id'),index=data.get('reading'),source_id=source_id) }}">{{ data.get('readingChapter') }}</a>
-                {% if next %}
-                    <a href="
+    {% if is_subscribe %}
+        <p>阅读进度：&nbsp;<a
+                href="{{ url_for('read',book_id=data.get('_id'),index=reading,source_id=source_id) }}">{{ readingChapter }}</a>
+            {% if next %}
+                <a href="
                             {{ url_for('read',book_id=data.get('_id'),index=next,source_id=source_id) }}">下一章</a>
-                {% endif %}
-            </p>
-        {% endif %}
+            {% endif %}
+        </p>
     {% endif %}
     <p>阅读选项：
-        <a href="{{ url_for('chapter',source_id=source_id,book_id=book_id,page=0) }}">章节列表</a>&nbsp;&nbsp;
-        <a href="{{ url_for('source',book_id=book_id) }}">换源</a>&nbsp;&nbsp;
-        {% if not current_user.is_anonymous %}
-
-            {% if data.get('is_subscribe') %}
-                <a href="{{ url_for('unsubscribe',id=data.get('_id')) }}">取消订阅</a>
-            {% else %}
-                <a href="{{ url_for('subscribe',id=data.get('_id')) }}">订阅</a>
-            {% endif %}
+        <a href="{{ url_for('chapter',source_id=source_id,book_id=data.get('_id'),page=0) }}">章节列表</a>&nbsp;&nbsp;
+        <a href="{{ url_for('source',book_id=data.get('_id')) }}">换源</a>&nbsp;&nbsp;
+        {% if is_subscribe %}
+            <a href="{{ url_for('unsubscribe',id=data.get('_id')) }}">取消订阅</a>
             &nbsp;&nbsp;
+            <a href="{{ url_for('download',book_id = data.get('_id'),source_id = source_id) }}">下载</a>
         {% else %}
             <a href="{{ url_for('subscribe',id=data.get('_id')) }}">订阅</a>
-            &nbsp;&nbsp;
         {% endif %}
-        <a href="{{ url_for('download',book_id = book_id,source_id = source_id) }}">下载</a>
+
     </p>
 
 {% endblock %}
