@@ -18,17 +18,23 @@
         {% if data.get('subscribe') %}
             {% for book in data.get('subscribe') %}
                 <table>
-                    <tr>
+                <tr>
+                    <td style="font-size:large">
                         <a href="{{ url_for('book_detail',book_id=book['_id']) }}">{{ book['title'] }}</a>
 
-                    </tr>
-                    <tr>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
                         {% if book['last_chapter'] %}
                             <p>{{ book['last_chapter'] }}({{ moment(book['updated']).fromNow() }})</p>
                         {% else %}
                             <p style="font-style:italic">获取更新失败，请重试</p>
                         {% endif %}
-                    </tr>
+                    </td>
+                </tr>
+
+
                 </table>
 
             {% endfor %}
