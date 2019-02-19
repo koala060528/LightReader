@@ -175,9 +175,9 @@ def subscribe():
     # js = get_response('https://novel.juhe.im/book-info/' + _id)
     js = get_response('http://api.zhuishushenqi.com/book/' + _id)
     name = js.get('title')
-    if not name:
-        flash('这本书不存在')
-        return redirect(url_for('index'))
+    # if not name:
+    #     flash('这本书不存在')
+    #     return redirect(url_for('index'))
 
     # data = get_response('https://novel.juhe.im/book-sources?view=summary&book=' + _id)
     data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + _id)
@@ -186,10 +186,11 @@ def subscribe():
     db.session.add(s)
     db.session.commit()
     flash('订阅成功')
-    next_page = request.args.get('next')
-    if not next_page or url_parse(next_page).decode_netloc() != '':
-        next_page = url_for('index')
-    return redirect(next_page)
+    # next_page = request.args.get('next')
+    # if not next_page or url_parse(next_page).decode_netloc() != '':
+    #     next_page = url_for('index')
+    # return redirect(next_page)
+    return redirect(url_for('book_detail', book_id=_id))
 
 
 @app.route('/unsubscribe/')
