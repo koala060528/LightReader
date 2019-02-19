@@ -15,6 +15,7 @@ import time
 from time import sleep
 from redis.exceptions import ConnectionError
 
+
 def get_response(url):
     i = 0
     while i < 5:
@@ -106,16 +107,24 @@ def index():
     # 手动创建事件循环
     asyncio.set_event_loop(asyncio.new_event_loop())
     loop = asyncio.get_event_loop()
+    tasks = list()
     # 获取订阅信息
     if current_user.is_authenticated:
         dic['subscribe'] = []
         for s in current_user.subscribing.order_by(Subscribe.time.desc()):
-            # subscribe_lis.append(
-            #     (s.book_id, s.book_name, 'https://novel.juhe.im/book-info/' + s.book_id))
-            subscribe_lis.append(
-                (s.book_id, s.book_name, 'http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id))
+            subscribe_lis.append(s)
+        if len(subscribe_lis) > 0:
+            s_url = 'http://api.zhuishushenqi.com/book?view=updated&id='
+            for s in subscribe_lis:
+                s_url += s.book_id + ','
+            s_url = s_url[:-1]
+            tasks.append(async_get_response(key='subscribe', url=s_url, res=res))
+        # subscribe_lis.append(
+        #     (s.book_id, s.book_name, 'https://novel.juhe.im/book-info/' + s.book_id))
+        # subscribe_lis.append(
+        #     (s.book_id, s.book_name, 'http://api.zhuishushenqi.com/book?view=updated&id=' + s.book_id))
 
-    tasks = [async_get_response(key=book_id, url=url, res=res) for book_id, book_name, url in subscribe_lis]
+    # tasks = [async_get_response(key=book_id, url=url, res=res) for book_id, book_name, url in subscribe_lis]
 
     # 获取分类
     # tasks.append(async_get_response(key='classify', url='https://novel.juhe.im/categories', res=res))
@@ -128,24 +137,16 @@ def index():
     # 异步获取
     loop.run_until_complete(asyncio.wait(tasks))
 
-    for book_id, book_name, url in subscribe_lis:
-        js = res.get(book_id)
-        if js:
-            t = datetime.strptime(js[0]['updated'], UTC_FORMAT)
-            dic['subscribe'].append({
-                'title': book_name,
-                '_id': book_id,
-                'last_chapter': js[0]['lastChapter'],
-                'updated': t
-            })
-        else:
-            dic['subscribe'].append({
-                'title': book_name,
-                '_id': book_id,
-                'last_chapter': None,
-                'updated': None
-            })
-
+    # 处理订阅信息
+    js = res.get('subscribe')
+    for i in range(0, len(subscribe_lis)):
+        t = datetime.strptime(js[i]['updated'], UTC_FORMAT)
+        dic['subscribe'].append({
+            'title': subscribe_lis[i].book_name,
+            '_id': subscribe_lis[i].book_id,
+            'last_chapter': js[i]['lastChapter'],
+            'updated': t
+        })
     # 预分组
     # data['male'] = [data['male'][i:i + 3] for i in range(0, len(data['male']), 3)]
     # data['female'] = [data['female'][i:i + 3] for i in range(0, len(data['female']), 3)]
@@ -484,7 +485,7 @@ def classify():
     data = get_response(
         'http://api.zhuishushenqi.com/book/by-categories?' + (('&major=' + major) if major else '') + (
             ('&gender=' + gender) if gender else '') + (('&type=' + _type) if _type else '') + (
-                    ('&start=' + start) if start else '') + (('&limit=' + limit) if limit else ''))
+            ('&start=' + start) if start else '') + (('&limit=' + limit) if limit else ''))
     data = data['books']
     next_page = True
     if len(data) < Config.CHAPTER_PER_PAGE:
