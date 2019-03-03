@@ -35,11 +35,11 @@
         <a href="{{ url_for('source',book_id=data.get('_id')) }}">换源</a>&nbsp;&nbsp;
         {% if is_subscribe %}
             <a href="{{ url_for('unsubscribe',id=data.get('_id')) }}">取消订阅</a>
-            &nbsp;&nbsp;
-            <a href="{{ url_for('download',book_id = data.get('_id'),source_id = source_id) }}">下载</a>
         {% else %}
             <a href="{{ url_for('subscribe',id=data.get('_id')) }}">订阅</a>
         {% endif %}
+        &nbsp;&nbsp;
+        <a href="{{ url_for('download',book_id = data.get('_id'),source_id = source_id) }}">下载</a>
 
     </p>
 

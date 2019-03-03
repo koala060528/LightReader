@@ -192,18 +192,24 @@ def unsubscribe():
     return redirect(next_page)
 
 
+def get_source_id(book_id):
+    dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
+    for i in range(len(dd))[::-1]:
+        if dd[i]['source'] != 'zhuishuvip':
+            source_id = dd[i]['_id']
+            if dd[i]['source'] == 'my176':
+                break
+
+    return source_id
+
+
 @app.route('/chapter/', methods=['GET', 'POST'])
 def chapter():
     page = request.args.get('page')
     book_id = request.args.get('book_id')
     source_id = request.args.get('source_id')
     if not source_id:
-        dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
-        for i in range(len(dd))[::-1]:
-            if dd[i]['source'] != 'zhuishuvip':
-                source_id = dd[i]['_id']
-                if dd[i]['source'] == 'my176':
-                    break
+        source_id = get_source_id(book_id)
     data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
     lis = []
     l = []
@@ -338,6 +344,8 @@ def get_content_list(url, key=None):
                 txt = get_content_text(url)
         except ConnectionError:
             txt = get_content_text(url)
+    else:
+        txt = get_content_text(url)
     lis = txt.split('\n')
     li = []
     for l in lis:
@@ -509,13 +517,13 @@ def rank(_id):
 @app.route('/download', methods=['GET'])
 @login_required
 def download():
-    if not current_user.is_authenticated:
-        return render_template('permission_denied.html', title='权限不足', message='下载功能并非向所有人开放，请联系管理员索取权限')
-    else:
-        if not current_user.can_download:
-            return render_template('permission_denied.html', title='权限不足', message='下载功能并非向所有人开放，请联系管理员索取权限')
-    source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
+    if not current_user.can_download:
+        return render_template('permission_denied.html', title='权限不足', message='下载功能并非向所有人开放，请联系管理员索取权限')
+    source_id = request.args.get('source_id')
+    if not source_id:
+        source_id = get_source_id(book_id)
+
     # data = get_response('http://novel.juhe.im/book-info/' + book_id)
     data = get_response('http://api.zhuishushenqi.com/book/' + book_id)
     book_name = data.get('title')
