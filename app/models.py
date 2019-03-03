@@ -25,6 +25,7 @@ class User(UserMixin, db.Model):
     user_agent = db.Column(db.String(256))
     is_admin = db.Column(db.Boolean)  # 表示用户是否是管理员，0表示不是，1表示是
     font_size = db.Column(db.String(10))  # 用户设置的字体大小
+    night_mode = db.Column(db.Boolean, default=0)  # 夜间模式，0表示关，1表示开
 
     # subscribing = db.relationship('Book',
     #                              secondary=subscribe,

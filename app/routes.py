@@ -64,6 +64,7 @@ def login():
         if not next_page or url_parse(next_page).decode_netloc() != '':
             next_page = url_for('index')
         return redirect(next_page)
+    flash('本站内容需要登录之后才能查看')
     return render_template('login.html', title='登录', form=form)
 
 
@@ -87,6 +88,7 @@ def register():
 
 
 @app.route('/delete_user/<id>', methods=['GET'])
+@login_required
 def delete_user(id):
     if not current_user.is_admin:
         return render_template('permission_denied.html', message=None, title='权限不足')
@@ -204,6 +206,7 @@ def get_source_id(book_id):
 
 
 @app.route('/chapter/', methods=['GET', 'POST'])
+@login_required
 def chapter():
     page = request.args.get('page')
     book_id = request.args.get('book_id')
@@ -243,7 +246,7 @@ def chapter():
 
 
 @app.route('/read/', methods=['GET'])
-# @login_required
+@login_required
 def read():
     index = int(request.args.get('index'))
     source_id = request.args.get('source_id')
@@ -298,7 +301,8 @@ def read():
 
     return render_template('read.html', body=li, title=title, next=(index + 1) if len(chap) - index > 1 else None,
                            pre=(index - 1) if index > 0 else None, index=index,
-                           book_id=book_id, page=page, source_id=source_id, font_size=font_size)
+                           book_id=book_id, page=page, source_id=source_id, font_size=font_size,
+                           background_color='#b0c4de')
 
 
 def reg_biquge(book_url, chapter_url):
@@ -386,6 +390,7 @@ def local2utc(local_st):
 
 
 @app.route('/book_detail', methods=['GET'])
+@login_required
 def book_detail():
     book_id = request.args.get('book_id')
     asyncio.set_event_loop(asyncio.new_event_loop())
@@ -426,6 +431,7 @@ def book_detail():
 
 
 @app.route('/source/<book_id>', methods=['GET'])
+@login_required
 def source(book_id):
     page = request.args.get('page')
     # data = get_response('http://novel.juhe.im/book-sources?view=summary&book=' + book_id)
@@ -444,6 +450,7 @@ def source(book_id):
 
 # 分类
 @app.route('/classify', methods=['GET'])
+@login_required
 def classify():
     gender = request.args.get('gender')
     _type = request.args.get('type')
@@ -472,6 +479,7 @@ def classify():
 
 # 书单列表
 @app.route('/book_list_rank', methods=['GET'])
+@login_required
 def book_list_rank():
     gender = request.args.get('gender')
     duration = request.args.get('duration')
@@ -494,6 +502,7 @@ def book_list_rank():
 
 # 书单详情
 @app.route('/bool_list_detail<_id>', methods=['GET'])
+@login_required
 def book_list_detail(_id):
     # data = get_response('https://novel.juhe.im/booklists/' + _id)
     data = get_response('http://api.zhuishushenqi.com/book-list/' + _id)
@@ -507,6 +516,7 @@ def book_list_detail(_id):
 
 # 排行榜
 @app.route('/rank/<_id>', methods=['GET'])
+@login_required
 def rank(_id):
     # data = get_response('http://novel.juhe.im/rank/' + _id)
     data = get_response('http://api.zhuishushenqi.com/ranking/' + _id)
@@ -789,12 +799,15 @@ def read_setting():
     if request.method == 'POST':
         data = json.loads(request.get_data())
         font_size = data.get('font_size')
+        night_mode = data.get('night_mode')
         current_user.font_size = font_size
+        current_user.night_mode = night_mode
         db.session.commit()
         return 1
 
 
 @app.route('/author/<author_name>', methods=['GET'])
+@login_required
 def author(author_name):
     # data = get_response('http://novel.juhe.im/author-books?author=' + author_name)
     data = get_response('http://api.zhuishushenqi.com/book/accurate-search?author=' + author_name)

@@ -10,3 +10,17 @@
         }
     </style>
 {% endblock %}
+
+{% block navbar %}
+    {{ super() }}
+    <style>
+        body {
+            background-color: {{ background_color }};
+        }
+
+        .navbar-default {
+            background-color: {{ background_color }};
+        }
+    </style>
+
+{% endblock %}

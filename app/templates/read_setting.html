@@ -6,22 +6,31 @@
         <button id="cancel" onclick="cancel()">取消</button>
     </div>
 
+    <h1 style="font-size: large">阅读模式：</h1>
+    <div>
+        <button id="night_mode_1" type="button" style="color: #2b669a" onclick="change(this)">
+            日间模式
+        </button>
+        <button id="night_mode_2" type="button" onclick="change(this)">
+            夜间模式
+        </button>
+    </div>
 
     <h2 style="font-size: large">字体大小：</h2>
     <div>
-        <button id="button1" type="button" style="color: #2b669a" onclick="change(this)">
+        <button id="font_size_1" type="button" style="color: #2b669a" onclick="change(this)">
             100%
         </button>
-        <button id="button2" type="button" onclick="change(this)">
+        <button id="font_size_2" type="button" onclick="change(this)">
             125%
         </button>
-        <button id="button3" type="button" onclick="change(this)">
+        <button id="font_size_3" type="button" onclick="change(this)">
             150%
         </button>
-        <button id="button4" type="button" onclick="change(this)">
+        <button id="font_size_4" type="button" onclick="change(this)">
             175%
         </button>
-        <button id="button5" type="button" onclick="change(this)">
+        <button id="font_size_5" type="button" onclick="change(this)">
             200%
         </button>
     </div>
@@ -38,23 +47,43 @@
 
     <script>
         var font_size = '100%';
+        var night_mode = 0;
 
         function change(button) {
             var buttons = document.getElementsByTagName('button');
-            for (var i = 0; i < buttons.length; i++) {
-                buttons[i].style.color = 'black';
+            if (button.id.startsWith('font_size')) {
+                for (var i = 0; i < buttons.length; i++) {
+                    if (buttons[i].id.startsWith('font_size')) {
+                        buttons[i].style.color = 'black';
+                    }
+                }
+                font_size = button.innerHTML.trim();
+                var p = document.getElementsByTagName('p');
+                for (var j = 0; j < p.length; j++) {
+                    p[j].style.fontSize = font_size;
+                }
+            }
+            if (button.id.startsWith('night_mode')) {
+                for (var i = 0; i < buttons.length; i++) {
+                    if (buttons[i].id.startsWith('night_mode')) {
+                        buttons[i].style.color = 'black';
+                    }
+                }
+
+                if (button.innerText == '日间模式') {
+                    night_mode = 0;
+                } else {
+                    night_mode = 1;
+                }
             }
             button.style.color = '#2b669a';
-            font_size = button.innerHTML.trim();
-            var p = document.getElementsByTagName('p');
-            for (var j = 0; j < p.length; j++) {
-                p[j].style.fontSize = font_size;
-            }
+
         }
 
         function save() {
             var data = {};
             data.font_size = font_size;
+            data.night_mode = night_mode;
             $.post('/read_setting/', JSON.stringify(data));
             window.history.back(-1);
         }
@@ -63,4 +92,8 @@
             window.history.back(-1);
         }
     </script>
+{% endblock %}
+
+{% block navbar %}
+    {{ super() }}
 {% endblock %}

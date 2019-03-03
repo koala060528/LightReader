@@ -9,6 +9,19 @@
 {% endblock %}
 
 {% block navbar %}
+    <style>
+        {% if current_user.night_mode %}
+        body {
+            background-color:#141414
+        }
+        body{
+            color:#A3A39D
+        }
+        .navbar-default {
+            background-color:#343434
+        }
+        {% endif %}
+    </style>
     <nav class="navbar navbar-default">
         <div class="container">
             <div class="navbar-header">
@@ -40,6 +53,7 @@
             </div>
         </div>
     </nav>
+
 {% endblock %}
 
 {% block content %}
@@ -107,7 +121,7 @@
                         crossDomain: true,
                         complete: function (data) {
                             var text = JSON.parse(data.responseText);
-                            if (text.length == 0){
+                            if (text.length == 0) {
                                 clearInterval(interval)
                             }
                             for (var i = 0; i < text.length; i++) {

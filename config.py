@@ -4,8 +4,8 @@ import os
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
     # database config
-    D_USER = os.environ.get('D_USER') or 'hengli'
-    D_PASSWORD = os.environ.get('D_PASSWORD') or 'hengli43'
+    D_USER = os.environ.get('D_USER') or 'koala'
+    D_PASSWORD = os.environ.get('D_PASSWORD') or '954193221'
     D_HOST = '127.0.0.1'
     D_PORT = 3306
     D_DATABASE = 'lightreader'

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block app_content %}
-    <b>{{ data.get('title') }}</b>
+    <b style="font-size: large">{{ data.get('title') }}</b>
     <hr>
     <p>作者：<a href="{{ url_for('author',author_name=data.get('author')) }}">{{ data.get('author') }}</a>
     </p>
@@ -43,4 +43,8 @@
 
     </p>
 
+{% endblock %}
+
+{% block navbar %}
+    {{ super() }}
 {% endblock %}

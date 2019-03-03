@@ -7,9 +7,9 @@
     {% else %}
         <p>欢迎，旅行者</p>
     {% endif %}
-
-    <h1 style="font-size: large">订阅</h1>
     <hr>
+    <h1 style="font-size: large">订阅</h1>
+
     {% if not current_user.is_anonymous %}
 
 
@@ -18,21 +18,21 @@
         {% if data.get('subscribe') %}
             {% for book in data.get('subscribe') %}
                 <table>
-                <tr>
-                    <td style="font-size:large">
-                        <a href="{{ url_for('book_detail',book_id=book['_id']) }}">{{ book['title'] }}</a>
+                    <tr>
+                        <td style="font-size:large">
+                            <a href="{{ url_for('book_detail',book_id=book['_id']) }}">{{ book['title'] }}</a>
 
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        {% if book['last_chapter'] %}
-                            <p>{{ book['last_chapter'] }}({{ moment(book['updated']).fromNow() }})</p>
-                        {% else %}
-                            <p style="font-style:italic">获取更新失败，请重试</p>
-                        {% endif %}
-                    </td>
-                </tr>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {% if book['last_chapter'] %}
+                                <p>{{ book['last_chapter'] }}({{ moment(book['updated']).fromNow() }})</p>
+                            {% else %}
+                                <p style="font-style:italic">获取更新失败，请重试</p>
+                            {% endif %}
+                        </td>
+                    </tr>
 
 
                 </table>
@@ -45,7 +45,7 @@
     {% else %}
 
         <p>
-            <a href="{{ url_for('login') }}"> 登录</a>以查看你的订阅列表
+            要查看你的订阅列表，请 <a href="{{ url_for('login') }}"> 登录</a>，或 <a href="{{ url_for('register') }}">注册</a>
         </p>
     {% endif %}
     <hr>
@@ -168,4 +168,8 @@
     </table>
 
 
+{% endblock %}
+
+{% block navbar %}
+    {{ super() }}
 {% endblock %}
