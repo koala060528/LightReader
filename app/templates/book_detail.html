@@ -12,7 +12,7 @@
         </p>
     {% endfor %}
     <p>最近更新：{{ moment(data.get('updated')).fromNow() }}</p>
-    {% if is_subscribe %}
+    {% if lastIndex %}
         <p>最新章节：
             <a href="{{ url_for('read',book_id=data.get('_id'),index=lastIndex,source_id=source_id) }}">{{ data.get('lastChapter') }}</a>
         </p>

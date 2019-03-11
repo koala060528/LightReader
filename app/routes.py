@@ -1,5 +1,5 @@
 from app import app, db, text, redis
-from app.models import User, Subscribe, Download, Task
+from app.models import User, Subscribe, Download, Task, Record
 import json, os, re
 from flask import render_template, flash, redirect, url_for, request, jsonify, current_app
 from app.forms import LoginForm, RegistrationForm, SearchForm, JumpForm
@@ -252,14 +252,27 @@ def read():
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
     # data = get_response('http://novel.juhe.im/book-chapters/' + source_id)
-    data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
+    r = Record(user=current_user, book_id=book_id, chapter_index=index, source_id=source_id)
+    asyncio.set_event_loop(asyncio.new_event_loop())
+    loop = asyncio.get_event_loop()
+    tasks = list()
+    res = dict()
+    tasks.append(async_get_response(key='detail', url='http://api.zhuishushenqi.com/book/' + book_id, res=res))
+    tasks.append(
+        async_get_response(key='chapters', url='http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id),
+                           res=res))
+    loop.run_until_complete(asyncio.wait(tasks))
+    r.book_name = res['detail']['title']
+    r.source_name = res['chapters']['name']
+    # data = get_response('http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id))
     page = int(index / Config.CHAPTER_PER_PAGE)
-    chap = data.get('chapters')
+    chap = res['chapters'].get('chapters')
     title = chap[index]['title']
     url = chap[index]['link']
+    r.chapter_name = chap[index]['title']
     # 为各个源添加特殊处理
-    if data['source'] == 'biquge':
-        url = reg_biquge(data['link'], url)
+    if res['chapters']['source'] == 'biquge':
+        url = reg_biquge(res['chapters']['link'], url)
     # 设定redis key
     key = md5((source_id + str(index)).encode("utf8")).hexdigest()[:10]
 
@@ -293,11 +306,15 @@ def read():
         font_size = current_user.font_size if current_user.font_size is not None else '150%'
         s = Subscribe.query.filter(Subscribe.book_id == book_id, Subscribe.user == current_user).first()
         if s:
+            r.is_subscribe = True
             s.chapter = index
             s.chapter_name = title
             s.source_id = source_id
             s.time = datetime.utcnow()
-            db.session.commit()
+        else:
+            r.is_subscribe = False
+    db.session.add(r)
+    db.session.commit()
 
     return render_template('read.html', body=li, title=title, next=(index + 1) if len(chap) - index > 1 else None,
                            pre=(index - 1) if index > 0 else None, index=index,
@@ -394,6 +411,7 @@ def local2utc(local_st):
 def book_detail():
     book_id = request.args.get('book_id')
     asyncio.set_event_loop(asyncio.new_event_loop())
+    c = 0  # 标识当前阅读章节序号
     loop = asyncio.get_event_loop()
     tasks = list()
     res = dict()
@@ -404,8 +422,11 @@ def book_detail():
         s = current_user.subscribing.filter(Subscribe.book_id == book_id).first()
         if s:
             source_id = s.source_id
-            tasks.append(async_get_response(
-                key='chapters', url='http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id), res=res))
+            c = int(s.chapter)
+        else:
+            source_id = get_source_id(book_id)
+        tasks.append(async_get_response(
+            key='chapters', url='http://api.zhuishushenqi.com/toc/{0}?view=chapters'.format(source_id), res=res))
     loop.run_until_complete(asyncio.wait(tasks))
 
     data = res.get('detail')
@@ -414,20 +435,22 @@ def book_detail():
     data['lastChapter'] = res['updated'][0]['lastChapter']
     lis = data.get('longIntro').split('\n')
     data['longIntro'] = lis
-    if not res.get('chapters'):
-        return render_template('book_detail.html', data=data, title=data.get('title'), is_subscribe=False)
-    else:
-        chap = res['chapters']['chapters']
+    # if not res.get('chapters'):
+    #     return render_template('book_detail.html', data=data, title=data.get('title'), is_subscribe=False)
+    # else:
+    chap = res['chapters']['chapters']
+    lastIndex = None
+    if chap[-1]['title'].split(' ')[-1] == data['lastChapter'].split(' ')[-1]:
         lastIndex = len(chap) - 1
-        c = int(current_user.subscribing.filter(Subscribe.book_id == book_id).first().chapter)
-        next = c + 1 if chap and len(chap) > c + 1 else None
-        if c + 1 > len(chap):
-            readingChapter = chap[-1]['title']  # 防止换源之后章节数量越界
-        else:
-            readingChapter = chap[c]['title']
-        return render_template(
-            'book_detail.html', data=data, lastIndex=lastIndex, reading=c, next=next, source_id=source_id,
-            title=data.get('title'), readingChapter=readingChapter, is_subscribe=True)
+
+    next = c + 1 if chap and len(chap) > c + 1 else None
+    if c + 1 > len(chap):
+        readingChapter = chap[-1]['title']  # 防止换源之后章节数量越界
+    else:
+        readingChapter = chap[c]['title']
+    return render_template(
+        'book_detail.html', data=data, lastIndex=lastIndex, reading=c, next=next, source_id=source_id,
+        title=data.get('title'), readingChapter=readingChapter, is_subscribe=True)
 
 
 @app.route('/source/<book_id>', methods=['GET'])

@@ -141,6 +141,24 @@ class Task(db.Model):
         return job.meta.get('progress', 0) if job is not None else 100
 
 
+class Record(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    book_id = db.Column(db.String(128))
+    book_name = db.Column(db.String(128))
+    chapter_index = db.Column(db.Integer)
+    chapter_name = db.Column(db.String(128))
+    source_id = db.Column(db.String(128))
+    source_name = db.Column(db.String(128))
+    time = db.Column(db.DateTime, default=datetime.now())
+    is_subscribe = db.Column(db.Boolean)
+
+    user = db.relationship('User', backref=db.backref('record', lazy='dynamic'))
+
+    def __repr__(self):
+        return '<User:%s read Book:%s>' & (self.user.name, self.book_name)
+
+
 @login.user_loader
 def load_user(id):
     user = User.query.get(int(id))
