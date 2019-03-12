@@ -35,3 +35,8 @@ class Config(object):
 
     # 文件目录
     UPLOADS_DEFAULT_DEST = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'files')
+
+    # headers
+    headers = {
+        'User-Agent': 'ZhuiShuShenQi/3.172.1 (Android 5.1.1; Meizu X86 / Meizu Mx5; China Mobile GSM)[preload=false;locale=zh_CN;clientidbase=]'
+    }

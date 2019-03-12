@@ -13,7 +13,6 @@ from hashlib import md5
 import asyncio, aiohttp
 import time
 from time import sleep
-from redis.exceptions import ConnectionError
 
 
 def get_response(url):
@@ -21,7 +20,7 @@ def get_response(url):
     while i < 5:
         js = None
         try:
-            data = requests.get(url).text
+            data = requests.get(url, headers=Config.headers).text
             js = json.loads(data)
             break
         except:
@@ -32,7 +31,7 @@ def get_response(url):
 
 async def async_get_response(key, url, res):
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
+        async with session.get(url, headers=Config.headers) as resp:
             assert resp.status == 200
             res[key] = await resp.json()
 
@@ -124,11 +123,20 @@ def index():
 
     # 获取分类
     # tasks.append(async_get_response(key='classify', url='https://novel.juhe.im/categories', res=res))
-    tasks.append(async_get_response(key='classify', url='http://api.zhuishushenqi.com/cats/lv2/statistics', res=res))
+    dic['classify'] = get_redis_string('classify')
+    if not dic['classify']:
+        tasks.append(
+            async_get_response(key='classify', url='http://api.zhuishushenqi.com/cats/lv2/statistics', res=res))
+    else:
+        dic['classify'] = json.loads(dic['classify'])
 
     # 获取榜单信息
     # tasks.append(async_get_response(key='rank', url='https://novel.juhe.im/rank-category', res=res))
-    tasks.append(async_get_response(key='rank', url='http://api.zhuishushenqi.com/ranking/gender', res=res))
+    dic['rank'] = get_redis_string('rank')
+    if not dic['rank']:
+        tasks.append(async_get_response(key='rank', url='http://api.zhuishushenqi.com/ranking/gender', res=res))
+    else:
+        dic['rank'] = json.loads(dic['rank'])
 
     # 异步获取
     loop.run_until_complete(asyncio.wait(tasks))
@@ -147,9 +155,13 @@ def index():
     # data['male'] = [data['male'][i:i + 3] for i in range(0, len(data['male']), 3)]
     # data['female'] = [data['female'][i:i + 3] for i in range(0, len(data['female']), 3)]
     # data['press'] = [data['press'][i:i + 3] for i in range(0, len(data['press']), 3)]
-    dic['classify'] = res.get('classify')
+    if not dic['classify']:
+        dic['classify'] = res.get('classify')
+        set_redis_string('classify', json.dumps(dic['classify']))
 
-    dic['rank'] = res.get('rank')
+    if not dic['rank']:
+        dic['rank'] = res.get('rank')
+        set_redis_string('rank', json.dumps(dic['rank']))
 
     # 搜索框
     form = SearchForm()
@@ -356,16 +368,22 @@ def get_content_text(url):
     return txt
 
 
+def get_redis_string(key):
+    if redis.exists(key):
+        txt = redis.get(key).decode()
+    else:
+        return None
+    return txt
+
+
+def set_redis_string(key, txt):
+    redis.set(key, str(txt), ex=86400)
+
+
 def get_content_list(url, key=None):
     if key:
-        try:
-            if redis.exists(key):
-                txt = redis.get(key).decode()
-            else:
-                txt = get_content_text(url)
-        except ConnectionError:
-            txt = get_content_text(url)
-    else:
+        txt = get_redis_string(key)
+    if not key or not txt:
         txt = get_content_text(url)
     lis = txt.split('\n')
     li = []
