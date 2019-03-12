@@ -252,7 +252,7 @@ def read():
     source_id = request.args.get('source_id')
     book_id = request.args.get('book_id')
     # data = get_response('http://novel.juhe.im/book-chapters/' + source_id)
-    r = Record(user=current_user, book_id=book_id, chapter_index=index, source_id=source_id)
+    r = Record(user=current_user, book_id=book_id, chapter_index=index, source_id=source_id, time=datetime.utcnow())
     asyncio.set_event_loop(asyncio.new_event_loop())
     loop = asyncio.get_event_loop()
     tasks = list()
