@@ -139,7 +139,8 @@ def index():
         dic['rank'] = json.loads(dic['rank'])
 
     # 异步获取
-    loop.run_until_complete(asyncio.wait(tasks))
+    if len(tasks) > 0:
+        loop.run_until_complete(asyncio.wait(tasks))
 
     # 处理订阅信息
     js = res.get('subscribe')
@@ -430,6 +431,7 @@ def book_detail():
     book_id = request.args.get('book_id')
     asyncio.set_event_loop(asyncio.new_event_loop())
     c = 0  # 标识当前阅读章节序号
+    is_subscribe = False
     loop = asyncio.get_event_loop()
     tasks = list()
     res = dict()
@@ -441,6 +443,7 @@ def book_detail():
         if s:
             source_id = s.source_id
             c = int(s.chapter)
+            is_subscribe = True
         else:
             source_id = get_source_id(book_id)
         tasks.append(async_get_response(
@@ -468,7 +471,7 @@ def book_detail():
         readingChapter = chap[c]['title']
     return render_template(
         'book_detail.html', data=data, lastIndex=lastIndex, reading=c, next=next, source_id=source_id,
-        title=data.get('title'), readingChapter=readingChapter, is_subscribe=True)
+        title=data.get('title'), readingChapter=readingChapter, is_subscribe=is_subscribe)
 
 
 @app.route('/source/<book_id>', methods=['GET'])
