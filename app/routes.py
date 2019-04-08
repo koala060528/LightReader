@@ -209,12 +209,15 @@ def unsubscribe():
 
 def get_source_id(book_id):
     dd = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
+    source_id = None
     for i in range(len(dd))[::-1]:
         if dd[i]['source'] != 'zhuishuvip':
             source_id = dd[i]['_id']
             if dd[i]['source'] == 'my176':
                 break
-
+    if not source_id:
+        if len(dd) == 1 and dd[0]['source'] == 'zhuishuvip':
+            source_id = dd[0]['_id']
     return source_id
 
 
@@ -459,10 +462,16 @@ def book_detail():
     # if not res.get('chapters'):
     #     return render_template('book_detail.html', data=data, title=data.get('title'), is_subscribe=False)
     # else:
-    chap = res['chapters']['chapters']
+    source_type = 'normal'
     lastIndex = None
-    if chap[-1]['title'].split(' ')[-1] == data['lastChapter'].split(' ')[-1]:
-        lastIndex = len(chap) - 1
+    if res['chapters']:
+        if res['chapters']['source'] == 'zhuishuvip':
+            source_type = 'vip'
+        chap = res['chapters']['chapters']
+        if chap[-1]['title'].split(' ')[-1] == data['lastChapter'].split(' ')[-1]:
+            lastIndex = len(chap) - 1
+    else:
+        source_type = None
 
     next = c + 1 if chap and len(chap) > c + 1 else None
     if c + 1 > len(chap):
@@ -471,7 +480,7 @@ def book_detail():
         readingChapter = chap[c]['title']
     return render_template(
         'book_detail.html', data=data, lastIndex=lastIndex, reading=c, next=next, source_id=source_id,
-        title=data.get('title'), readingChapter=readingChapter, is_subscribe=is_subscribe)
+        title=data.get('title'), readingChapter=readingChapter, is_subscribe=is_subscribe, source_type=source_type)
 
 
 @app.route('/source/<book_id>', methods=['GET'])
@@ -480,16 +489,24 @@ def source(book_id):
     page = request.args.get('page')
     # data = get_response('http://novel.juhe.im/book-sources?view=summary&book=' + book_id)
     data = get_response('http://api.zhuishushenqi.com/toc?view=summary&book=' + book_id)
-    for s in data:
+    s = Subscribe.query.filter(Subscribe.user == current_user, Subscribe.book_id == book_id).first()
+    source_id = ''
+    if s:
+        source_id = s.source_id
+    for source in data:
         UTC_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
-        t = datetime.strptime(s['updated'], UTC_FORMAT)
-        s['updated'] = t
+        t = datetime.strptime(source['updated'], UTC_FORMAT)
+        source['updated'] = t
+        if source_id == source['_id']:
+            source['current'] = True
+        else:
+            source['current'] = False
         # t = s['updated']
         # t = datetime.strptime(t, '%Y-%m-%dT%H:%M:%S.%fZ')
         # s['updated'] = utc2local(t).strftime('%Y-%m-%d %H:%M:%S')
     if not page:
         page = 0
-    return render_template('source.html', data=data[1:], title='换源', page=page, book_id=book_id)
+    return render_template('source.html', data=data, title='换源', page=page, book_id=book_id)
 
 
 # 分类

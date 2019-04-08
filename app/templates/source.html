@@ -5,9 +5,17 @@
         {% for s in data %}
             <th>
             <a href="{{ url_for('chapter',source_id=s.get('_id'),page=page,book_id=book_id) }}">{{ s.get('name') }}</a>
+            {% if s.get('current')==True %}
+                <th>
+                <i>
+                    （当前选择）
+                </i>
+                </th>
+            {% endif %}
+            <th>
             </th>
             <br>
-            <th>
+
             最新章节：{{ s.get('lastChapter') }} -- 最近更新：{{ moment(s.get('updated')).fromNow() }}
             </th>
             <hr>
