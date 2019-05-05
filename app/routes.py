@@ -464,14 +464,23 @@ def book_detail():
     # else:
     source_type = 'normal'
     lastIndex = None
-    if res['chapters']:
+    if res.get('chapters'):
         if res['chapters']['source'] == 'zhuishuvip':
             source_type = 'vip'
         chap = res['chapters']['chapters']
         if chap[-1]['title'].split(' ')[-1] == data['lastChapter'].split(' ')[-1]:
             lastIndex = len(chap) - 1
+        next = c + 1 if chap and len(chap) > c + 1 else None
+        if c + 1 > len(chap):
+            readingChapter = chap[-1]['title']  # 防止换源之后章节数量越界
+        else:
+            readingChapter = chap[c]['title']
+
     else:
         source_type = None
+        next = None
+        c = None
+        readingChapter = None
 
     next = c + 1 if chap and len(chap) > c + 1 else None
     if c + 1 > len(chap):
