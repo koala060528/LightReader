@@ -482,11 +482,6 @@ def book_detail():
         c = None
         readingChapter = None
 
-    next = c + 1 if chap and len(chap) > c + 1 else None
-    if c + 1 > len(chap):
-        readingChapter = chap[-1]['title']  # 防止换源之后章节数量越界
-    else:
-        readingChapter = chap[c]['title']
     return render_template(
         'book_detail.html', data=data, lastIndex=lastIndex, reading=c, next=next, source_id=source_id,
         title=data.get('title'), readingChapter=readingChapter, is_subscribe=is_subscribe, source_type=source_type)

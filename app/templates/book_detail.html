@@ -14,7 +14,7 @@
     {% if source_type !=None %}
         {% if source_type == 'vip' %}
             <p>
-                <i>（提示：当前书源失效，请  <a href="{{ url_for('source',book_id=data.get('_id')) }}">换源</a>  ）</i>
+                <i>（提示：当前书源失效，请 <a href="{{ url_for('source',book_id=data.get('_id')) }}">换源</a> ）</i>
             </p>
         {% endif %}
         <p>最近更新：{{ moment(data.get('updated')).fromNow() }}</p>
@@ -50,7 +50,7 @@
         </p>
     {% else %}
         <p>
-            <i>（提示：这本书没有可以阅读的资源）</i>
+            <i>（提示：当前书源失效，请 <a href="{{ url_for('source',book_id=data.get('_id')) }}">换源</a> ）</i>
         </p>
     {% endif %}
 
